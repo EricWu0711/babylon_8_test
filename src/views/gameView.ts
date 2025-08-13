@@ -63,8 +63,24 @@ export class GameView {
      * 啟動渲染迴圈，持續更新場景
      */
     public run() {
+        let diceStopped = false;
         this.engine.runRenderLoop(() => {
             this.selfPlayer.mesh.position = this.playerCamera.camera.position.add(new Vector3(0, -2.5, 0)); // 相機在玩家上方
+
+            // 偵測骰子靜止
+            if (this.dice && this.dice.mesh.physicsBody) {
+                const linear = this.dice.mesh.physicsBody.getLinearVelocity();
+                const angular = this.dice.mesh.physicsBody.getAngularVelocity();
+                const isStopped = linear.length() < 0.05 && angular.length() < 0.05;
+                if (isStopped && !diceStopped) {
+                    diceStopped = true;
+                    const topValue = this.dice.getTopFaceValue();
+                    console.log('骰子停止，朝上的點數：', topValue);
+                }
+                if (!isStopped) {
+                    diceStopped = false;
+                }
+            }
 
             this.scene.render(); // 渲染場景
         });
@@ -83,6 +99,21 @@ export class GameView {
         this._initSelfPlayer(); // 加入玩家物件
         this._initDevCamera(canvas); // 初始化開發用相機
         this.inputManager.bindCallbackOnKeyboardC(() => this.switchCamera(), 'switchCamera'); // 綁定切換相機事件
+
+        // 綁定 x 鍵讓骰子彈起來（統一用 inputManager）
+        this.inputManager.bindCallbackOnKeyboardX(() => {
+            if (this.dice && this.dice.mesh.physicsBody) {
+                // 隨機方向 impulse
+                const impulse = new Vector3(
+                    (Math.random() - 0.5) * 100, // X方向
+                    Math.random() * 150 + 1500, // Y方向（向上）
+                    (Math.random() - 0.5) * 100 // Z方向
+                );
+                const pos = this.dice.mesh.position;
+                this.dice.mesh.physicsBody.applyImpulse(impulse, pos);
+                console.log('骰子隨機飛起！', impulse);
+            }
+        }, 'diceJump');
 
         this._showInspector(); // 顯示場景偵測器（開發用）
     }
@@ -164,6 +195,19 @@ export class GameView {
         this.dice.mesh.position = this.table.mesh.position.add(new Vector3(0, 3, 3));
         // 加入物理效果
         this.physicsManager.addPhysics(this.dice.mesh, PhysicsMotionType.DYNAMIC, false);
+
+        // 隨機滾動：給予隨機線性與角速度
+        const randomLinear = new Vector3((Math.random() - 0.5) * 10, Math.random() * 5 + 5, (Math.random() - 0.5) * 10);
+        const randomAngular = new Vector3(
+            (Math.random() - 0.5) * 10,
+            (Math.random() - 0.5) * 10,
+            (Math.random() - 0.5) * 10
+        );
+        if (this.dice.mesh.physicsBody) {
+            this.dice.mesh.physicsBody.setLinearVelocity(randomLinear);
+            this.dice.mesh.physicsBody.setAngularVelocity(randomAngular);
+            console.log('骰子隨機滾動', randomLinear, randomAngular);
+        }
     }
 
     /**
