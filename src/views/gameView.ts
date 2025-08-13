@@ -2,8 +2,10 @@ import { Engine, Scene, Vector3 } from '@babylonjs/core'; // Babylon.js 核心�
 import '@babylonjs/inspector'; // Babylon.js 場景偵測器
 
 import { HLight } from '../components/lights/hemisphericLight'; // 半球光元件
-import { Floor } from '../components/background/floor'; // 地板元件
-import { Wall } from '../components/background/wall'; // 牆壁元件
+import { Floor } from '../components/scene/floor'; // 地板元件
+import { Wall } from '../components/scene/wall'; // 牆壁元件
+import { Table } from '../components/scene/table'; // 賭桌元件
+import { Chair } from '../components/scene/chair'; // 椅子元件
 import { PlayerCamera } from '../components/cameras/playerCamera'; // 玩家相機元件
 import { DevCamera } from '../components/cameras/devCamera'; // 開發用上帝視角相機元件
 import { InputManager } from '../managers/inputManager'; // 輸入管理器
@@ -18,6 +20,8 @@ export class GameView {
     public playerCamera: PlayerCamera; // 玩家相機
     public devCamera: DevCamera; // 開發用相機
     public inputManager: InputManager; // 輸入管理器
+    public table: Table; // 賭桌物件
+    public chair: Chair; // 椅子物件
 
     /**
      * 建構子：初始化引擎與場景，並建立主要場景物件
@@ -29,10 +33,11 @@ export class GameView {
 
         this._initLight(); // 初始化光源
         this._initFloor(); // 建立地板
+        this._initTable(); // 加入賭桌、椅子
         this._initWalls(); // 建立四面牆壁
 
         this._initInputManager();
-        this._initPlayerCamera(canvas); // 初始化玩家相機
+        this._initPlayerCamera(canvas, new Vector3(0, 5, 15)); // 初始化玩家相機
         this._initDevCamera(canvas); // 初始化開發用相機
         this.inputManager.bindCallbackOnKeyboardC(() => this.switchCamera(), 'switchCamera'); // 綁定切換相機事件
 
@@ -78,9 +83,10 @@ export class GameView {
      * 初始化玩家相機（第一人稱視角）
      * @param canvas HTMLCanvasElement - 用於控制相機的畫布
      */
-    private _initPlayerCamera(canvas: HTMLCanvasElement) {
-        this.playerCamera = new PlayerCamera(this.scene, canvas);
+    private _initPlayerCamera(canvas: HTMLCanvasElement, startPosition: Vector3 = new Vector3(0, 5, -15)) {
+        this.playerCamera = new PlayerCamera(this.scene, canvas, startPosition);
         this.playerCamera.beforeBindInputManager();
+        this.playerCamera.setTarget(new Vector3(0, 5, 0)); // 設定相機目標位置
 
         this.inputManager.setControllable(this.playerCamera, 'player');
     }
@@ -105,6 +111,18 @@ export class GameView {
      */
     private _initFloor() {
         new Floor(this.scene, 100); // 建立地板，預設寬度 100
+    }
+
+    /**
+     * 建立賭桌元件
+     * 場景中央加入賭桌物件
+     */
+    private _initTable() {
+        this.table = new Table(this.scene);
+        this.table.mesh.position = new Vector3(0, 2.5, 0);
+
+        this.chair = new Chair(this.scene);
+        this.chair.seat.position = new Vector3(0, 1.2, 8);
     }
 
     /**
