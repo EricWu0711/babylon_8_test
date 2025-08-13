@@ -1,5 +1,17 @@
 import { GameType, GameState, PlayerAction, ChipValue, CardSuit, CardRank, BetResult } from './enums';
 
+/**
+ * 可控制物件介面
+ * 所有可被 InputManager 控制的元件（如相機、角色）都需實作這些方法
+ */
+export interface IControllable {
+    moveForward?(): void;
+    moveBackward?(): void;
+    moveLeft?(): void;
+    moveRight?(): void;
+    rotateBy?(dx: number, dy: number): void; // 滑鼠拖曳鏡頭
+    // 可擴充更多動作，如 jump、interact 等
+}
 
 /**
  * 玩家資料
@@ -11,14 +23,13 @@ import { GameType, GameState, PlayerAction, ChipValue, CardSuit, CardRank, BetRe
  * @param handCards 手牌（可選）
  */
 export interface Player {
-	id: string;
-	name: string;
-	chips: number;
-	seatIndex?: number;
-	currentAction?: PlayerAction;
-	handCards?: Card[];
+    id: string;
+    name: string;
+    chips: number;
+    seatIndex?: number;
+    currentAction?: PlayerAction;
+    handCards?: Card[];
 }
-
 
 /**
  * 荷官資料
@@ -27,11 +38,10 @@ export interface Player {
  * @param handCards 荷官手牌（可選）
  */
 export interface Dealer {
-	id: string;
-	name: string;
-	handCards?: Card[];
+    id: string;
+    name: string;
+    handCards?: Card[];
 }
-
 
 /**
  * 賭桌資料
@@ -43,14 +53,13 @@ export interface Dealer {
  * @param players 玩家列表
  */
 export interface Table {
-	id: string;
-	type: GameType;
-	seats: number;
-	chipsOnTable: Chip[];
-	dealer: Dealer;
-	players: Player[];
+    id: string;
+    type: GameType;
+    seats: number;
+    chipsOnTable: Chip[];
+    dealer: Dealer;
+    players: Player[];
 }
-
 
 /**
  * 籌碼資料
@@ -58,10 +67,9 @@ export interface Table {
  * @param ownerId 擁有者id（可選，未指定代表桌面）
  */
 export interface Chip {
-	value: ChipValue;
-	ownerId?: string;
+    value: ChipValue;
+    ownerId?: string;
 }
-
 
 /**
  * 撲克牌資料
@@ -70,11 +78,10 @@ export interface Chip {
  * @param isFaceUp 是否翻開
  */
 export interface Card {
-	suit: CardSuit;
-	rank: CardRank;
-	isFaceUp: boolean;
+    suit: CardSuit;
+    rank: CardRank;
+    isFaceUp: boolean;
 }
-
 
 /**
  * 下注資料
@@ -84,12 +91,11 @@ export interface Card {
  * @param result 結果（可選）
  */
 export interface Bet {
-	playerId: string;
-	amount: number;
-	odds: number;
-	result?: BetResult;
+    playerId: string;
+    amount: number;
+    odds: number;
+    result?: BetResult;
 }
-
 
 /**
  * 遊戲主資料
@@ -100,9 +106,9 @@ export interface Bet {
  * @param countdown 倒數計時（可選）
  */
 export interface GameModel {
-	state: GameState;
-	type: GameType;
-	table: Table;
-	bets: Bet[];
-	countdown?: number;
+    state: GameState;
+    type: GameType;
+    table: Table;
+    bets: Bet[];
+    countdown?: number;
 }
