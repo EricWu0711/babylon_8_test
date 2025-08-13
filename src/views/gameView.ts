@@ -1,15 +1,18 @@
 import { Engine, Scene, Vector3 } from '@babylonjs/core'; // Babylon.js 核心模組
 import '@babylonjs/inspector'; // Babylon.js 場景偵測器
+import { PhysicsMotionType } from '@babylonjs/core/Physics/v2';
 
 import { HLight } from '../components/lights/hemisphericLight'; // 半球光元件
 import { Floor } from '../components/scene/floor'; // 地板元件
 import { Wall } from '../components/scene/wall'; // 牆壁元件
 import { Table } from '../components/scene/table'; // 賭桌元件
 import { Chair } from '../components/scene/chair'; // 椅子元件
+import { Dice } from '../components/dices/dice'; // 骰子元件
 import { SelfPlayer } from '../components/players/self';
 import { PlayerCamera } from '../components/cameras/playerCamera'; // 玩家相機元件
 import { DevCamera } from '../components/cameras/devCamera'; // 開發用上帝視角相機元件
 import { InputManager } from '../managers/inputManager'; // 輸入管理器
+import { PhysicsManager } from '../managers/physicsManager';
 
 /**
  * 遊戲場景管理類別
@@ -17,13 +20,16 @@ import { InputManager } from '../managers/inputManager'; // 輸入管理器
  */
 export class GameView {
     public engine: Engine; // Babylon.js 引擎
+    public physicsManager: PhysicsManager;
     public scene: Scene; // Babylon.js 場景
     public playerCamera: PlayerCamera; // 玩家相機
     public devCamera: DevCamera; // 開發用相機
     public inputManager: InputManager; // 輸入管理器
+    public floor: Floor; // 地板物件
     public table: Table; // 賭桌物件
     public chair: Chair; // 椅子物件
-    public selfPlayer: any; // 玩家物件（SelfPlayer）
+    public selfPlayer: SelfPlayer; // 玩家物件（SelfPlayer）
+    public dice: Dice; // 骰子物件
 
     /**
      * 建構子：初始化引擎與場景，並建立主要場景物件
@@ -32,19 +38,7 @@ export class GameView {
     constructor(canvas: HTMLCanvasElement) {
         this.engine = new Engine(canvas, true); // 建立 Babylon.js 引擎
         this.scene = new Scene(this.engine); // 建立場景
-
-        this._initLight(); // 初始化光源
-        this._initFloor(); // 建立地板
-        this._initTable(); // 加入賭桌、椅子
-        this._initWalls(); // 建立四面牆壁
-
-        this._initInputManager();
-        this._initPlayerCamera(canvas, new Vector3(0, 5, 15)); // 初始化玩家相機
-        this._initSelfPlayer(); // 加入玩家物件
-        this._initDevCamera(canvas); // 初始化開發用相機
-        this.inputManager.bindCallbackOnKeyboardC(() => this.switchCamera(), 'switchCamera'); // 綁定切換相機事件
-
-        this._showInspector(); // 顯示場景偵測器（開發用）
+        this.physicsManager = new PhysicsManager(this.scene);
     }
 
     /**
@@ -74,6 +68,23 @@ export class GameView {
 
             this.scene.render(); // 渲染場景
         });
+    }
+
+    public async init(canvas: HTMLCanvasElement) {
+        await this.physicsManager.enablePhysics(); // 啟用物理系統
+        this._initLight(); // 初始化光源
+        this._initFloor(); // 建立地板
+        this._initTable(); // 加入賭桌、椅子
+        this._initDice(); // 加入骰子物件
+        this._initWalls(); // 建立四面牆壁
+
+        this._initInputManager();
+        this._initPlayerCamera(canvas, new Vector3(0, 5, 15)); // 初始化玩家相機
+        this._initSelfPlayer(); // 加入玩家物件
+        this._initDevCamera(canvas); // 初始化開發用相機
+        this.inputManager.bindCallbackOnKeyboardC(() => this.switchCamera(), 'switchCamera'); // 綁定切換相機事件
+
+        this._showInspector(); // 顯示場景偵測器（開發用）
     }
 
     /**
@@ -126,7 +137,8 @@ export class GameView {
      * 建立地板元件
      */
     private _initFloor() {
-        new Floor(this.scene, 100); // 建立地板，預設寬度 100
+        this.floor = new Floor(this.scene, 100); // 建立地板，預設寬度 100
+        this.physicsManager.addPhysics(this.floor.mesh, PhysicsMotionType.STATIC, true);
     }
 
     /**
@@ -137,8 +149,21 @@ export class GameView {
         this.table = new Table(this.scene);
         this.table.mesh.position = new Vector3(0, 2.5, 0);
 
+        this.physicsManager.addPhysics(this.table.mesh, PhysicsMotionType.STATIC, true);
+
         this.chair = new Chair(this.scene);
         this.chair.seat.position = new Vector3(0, 1.2, 8);
+    }
+
+    /**
+     * 建立骰子物件並放置於桌面中央
+     */
+    private _initDice() {
+        this.dice = new Dice(this.scene, 0.5);
+        // 放在桌面正中央上方
+        this.dice.mesh.position = this.table.mesh.position.add(new Vector3(0, 3, 3));
+        // 加入物理效果
+        this.physicsManager.addPhysics(this.dice.mesh, PhysicsMotionType.DYNAMIC, false);
     }
 
     /**

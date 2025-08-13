@@ -61,6 +61,8 @@ export class InputManager {
                         this.eventsOnKeyboardC[name]();
                     }
                     break;
+                case 'x':
+                    break;
             }
         });
 
