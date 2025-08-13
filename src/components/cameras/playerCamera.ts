@@ -95,6 +95,7 @@ export class PlayerCamera implements IControllable {
         right.normalize();
         this.camera.position.addInPlace(right.scale(CAMERA_SPEED));
     }
+
     public rotateBy(dx: number, dy: number): void {
         this.camera.rotation.y += dx * CAMERA_ROTATION_SPEED;
         this.camera.rotation.x += dy * CAMERA_ROTATION_SPEED;

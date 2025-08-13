@@ -6,6 +6,7 @@ import { Floor } from '../components/scene/floor'; // 地板元件
 import { Wall } from '../components/scene/wall'; // 牆壁元件
 import { Table } from '../components/scene/table'; // 賭桌元件
 import { Chair } from '../components/scene/chair'; // 椅子元件
+import { SelfPlayer } from '../components/players/self';
 import { PlayerCamera } from '../components/cameras/playerCamera'; // 玩家相機元件
 import { DevCamera } from '../components/cameras/devCamera'; // 開發用上帝視角相機元件
 import { InputManager } from '../managers/inputManager'; // 輸入管理器
@@ -22,6 +23,7 @@ export class GameView {
     public inputManager: InputManager; // 輸入管理器
     public table: Table; // 賭桌物件
     public chair: Chair; // 椅子物件
+    public selfPlayer: any; // 玩家物件（SelfPlayer）
 
     /**
      * 建構子：初始化引擎與場景，並建立主要場景物件
@@ -38,6 +40,7 @@ export class GameView {
 
         this._initInputManager();
         this._initPlayerCamera(canvas, new Vector3(0, 5, 15)); // 初始化玩家相機
+        this._initSelfPlayer(); // 加入玩家物件
         this._initDevCamera(canvas); // 初始化開發用相機
         this.inputManager.bindCallbackOnKeyboardC(() => this.switchCamera(), 'switchCamera'); // 綁定切換相機事件
 
@@ -67,6 +70,8 @@ export class GameView {
      */
     public run() {
         this.engine.runRenderLoop(() => {
+            this.selfPlayer.mesh.position = this.playerCamera.camera.position.add(new Vector3(0, -2.5, 0)); // 相機在玩家上方
+
             this.scene.render(); // 渲染場景
         });
     }
@@ -88,7 +93,7 @@ export class GameView {
         this.playerCamera.beforeBindInputManager();
         this.playerCamera.setTarget(new Vector3(0, 5, 0)); // 設定相機目標位置
 
-        this.inputManager.setControllable(this.playerCamera, 'player');
+        this.inputManager.setControllable(this.playerCamera, 'playerCamera'); // 綁定輸入管理器與玩家相機
     }
 
     /**
@@ -97,6 +102,17 @@ export class GameView {
      */
     private _initDevCamera(canvas: HTMLCanvasElement) {
         this.devCamera = new DevCamera(this.scene, canvas);
+    }
+
+    /**
+     * 建立玩家物件（SelfPlayer）
+     * 場景中央加入玩家物件
+     */
+    private _initSelfPlayer() {
+        this.selfPlayer = new SelfPlayer(this.scene);
+        this.selfPlayer.mesh.position = new Vector3(0, 2.5, 0); // 玩家物件放置於場景中央
+
+        this.inputManager.setControllable(this.selfPlayer, 'selfPlayer'); // 綁定輸入管理器與玩家物件
     }
 
     /**
