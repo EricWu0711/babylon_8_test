@@ -1,4 +1,4 @@
-import { Engine, Scene, Vector3, PassPostProcess, NodeRenderGraph } from '@babylonjs/core'; // Babylon.js 核心模組
+import { Engine, Scene, Vector3, PassPostProcess, NodeRenderGraph, NodeMaterial } from '@babylonjs/core'; // Babylon.js 核心模組
 import '@babylonjs/inspector'; // Babylon.js 場景偵測器
 import { PhysicsMotionType } from '@babylonjs/core/Physics/v2';
 
@@ -117,7 +117,8 @@ export class GameView {
 
         this._showInspector(); // 顯示場景偵測器（開發用）
 
-        await this.doFrameGraph(); // 初始化 NodeRenderGraph 處理流程，用一個編輯器拉NODE，效果有點類似shader
+        // await this.doFrameGraph(); // 套用一個編輯器拉節點，注意輸入輸出，效果有點類似shader
+        await this.doNodeMaterial(); // 基本上就是shader
     }
 
     /**
@@ -254,5 +255,18 @@ export class GameView {
         this.scene.onAfterRenderObservable.add(() => {
             frameGraph.execute();
         });
+    }
+
+    private async doNodeMaterial() {
+        // 在這裡執行 NodeMaterial 的相關處理
+        // 頭暈shader
+        let nodeMaterial = await NodeMaterial.ParseFromFileAsync(
+            'hypnosis',
+            'https://piratejc.github.io/assets/hypnosis.json',
+            this.scene
+        );
+        // this.table.mesh.material = nodeMaterial;
+        // this.floor.mesh.material = nodeMaterial;
+        this.dice.mesh.material = nodeMaterial;
     }
 }
