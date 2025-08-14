@@ -1,4 +1,4 @@
-import { Engine, Scene, Vector3 } from '@babylonjs/core'; // Babylon.js 核心模組
+import { Engine, Scene, Vector3, PassPostProcess, NodeRenderGraph } from '@babylonjs/core'; // Babylon.js 核心模組
 import '@babylonjs/inspector'; // Babylon.js 場景偵測器
 import { PhysicsMotionType } from '@babylonjs/core/Physics/v2';
 
@@ -116,6 +116,8 @@ export class GameView {
         }, 'diceJump');
 
         this._showInspector(); // 顯示場景偵測器（開發用）
+
+        await this.doFrameGraph(); // 初始化 NodeRenderGraph 處理流程，用一個編輯器拉NODE，效果有點類似shader
     }
 
     /**
@@ -222,5 +224,35 @@ export class GameView {
         new Wall(this.scene, new Vector3(-50, 5, 0), 1, 10, 100);
         // 右牆
         new Wall(this.scene, new Vector3(50, 5, 0), 1, 10, 100);
+    }
+
+    private async doFrameGraph() {
+        // 在這裡執行每一幀的圖形處理
+
+        const passPostProcess = new PassPostProcess('pass', 1, this.scene.activeCamera);
+
+        passPostProcess.samples = 4;
+        passPostProcess.resize(this.engine.getRenderWidth(), this.engine.getRenderHeight(), this.scene.activeCamera);
+
+        const nrg = await NodeRenderGraph.ParseFromSnippetAsync('#FAPQIH#1', this.scene, {
+            rebuildGraphOnEngineResize: false,
+        });
+
+        const frameGraph = nrg.frameGraph;
+
+        passPostProcess.onSizeChangedObservable.add(() => {
+            nrg.getInputBlocks()[0].value = passPostProcess.inputTexture.texture;
+            nrg.build();
+        });
+        // console.log('PassPostProcess size changed', nrg.getInputBlocks()[0].value, nrg.getBlockByName('Texture'));
+        nrg.getInputBlocks()[0].value = passPostProcess.inputTexture.texture;
+
+        nrg.build();
+
+        await nrg.whenReadyAsync();
+
+        this.scene.onAfterRenderObservable.add(() => {
+            frameGraph.execute();
+        });
     }
 }
