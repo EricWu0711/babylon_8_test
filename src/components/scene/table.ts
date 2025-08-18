@@ -7,6 +7,7 @@ import { MeshBuilder, Mesh, Scene, Vector3, Color3, StandardMaterial } from '@ba
 export class Table {
     public mesh: Mesh; // 桌面主體
     public legs: Mesh[] = []; // 桌腳陣列
+    private legHeight: number;
 
     /**
      * 建立賭桌
@@ -20,7 +21,7 @@ export class Table {
         scene: Scene,
         radius: number = 6,
         thickness: number = 0.5,
-        legHeight: number = 3,
+        legHeight: number = 3.5,
         legRadius: number = 0.3
     ) {
         // 桌面：半圓柱
@@ -34,7 +35,8 @@ export class Table {
             },
             scene
         );
-        this.mesh.position.y = legHeight + thickness / 2;
+        this.legHeight = legHeight;
+        this.mesh.position.y = this.legHeight + thickness / 2;
         const topMat = new StandardMaterial('tableTopMat', scene);
         topMat.diffuseColor = new Color3(0.6, 0.4, 0.2); // 木頭色
         topMat.backFaceCulling = false; // 雙面渲染，避免看透
@@ -61,16 +63,16 @@ export class Table {
         const legPosRadius = radius * 0.75;
         // 桌腳位置（半圓下方三點）
         const legPositions = [
-            new Vector3(-legPosRadius * Math.cos(Math.PI / 6), legHeight / 2, -legPosRadius * Math.sin(Math.PI / 6)),
-            new Vector3(0, legHeight / 2, -legPosRadius),
-            new Vector3(legPosRadius * Math.cos(Math.PI / 6), legHeight / 2, -legPosRadius * Math.sin(Math.PI / 6)),
+            new Vector3(-legPosRadius * Math.cos(Math.PI / 6), this.legHeight / 2, -legPosRadius * Math.sin(Math.PI / 6)),
+            new Vector3(0, this.legHeight / 2, -legPosRadius),
+            new Vector3(legPosRadius * Math.cos(Math.PI / 6), this.legHeight / 2, -legPosRadius * Math.sin(Math.PI / 6)),
         ];
         for (let i = 0; i < 3; i++) {
             const leg = MeshBuilder.CreateCylinder(
                 `tableLeg${i + 1}`,
                 {
                     diameter: legRadius * 2,
-                    height: legHeight,
+                    height: this.legHeight,
                 },
                 scene
             );
@@ -84,5 +86,13 @@ export class Table {
         this.legs.forEach((leg) => (leg.parent = this.mesh));
 
         this.mesh.rotation.x = Math.PI;
+    }
+
+    public getMesh() {
+        return this.mesh;
+    }
+
+    public getLegHeight() {
+        return this.legHeight;
     }
 }

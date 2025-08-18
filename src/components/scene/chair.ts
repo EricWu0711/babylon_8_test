@@ -7,6 +7,7 @@ import { MeshBuilder, Mesh, Scene, Vector3, Color3, StandardMaterial } from '@ba
 export class Chair {
     public seat: Mesh; // 坐墊
     public leg: Mesh; // 支架
+    private legHeight: number;
 
     /**
      * 建立椅子
@@ -20,7 +21,7 @@ export class Chair {
         scene: Scene,
         seatRadius: number = 1,
         seatThickness: number = 0.3,
-        legHeight: number = 1.5,
+        legHeight: number = 2,
         legRadius: number = 0.15
     ) {
         // 坐墊：寬扁圓柱
@@ -33,6 +34,7 @@ export class Chair {
             },
             scene
         );
+        this.legHeight = legHeight;
         this.seat.position.y = legHeight + seatThickness / 2;
         const seatMat = new StandardMaterial('chairSeatMat', scene);
         seatMat.diffuseColor = new Color3(0.8, 0.7, 0.5); // 淺色坐墊
@@ -44,12 +46,12 @@ export class Chair {
             'chairLeg',
             {
                 diameter: legRadius * 2,
-                height: legHeight,
+                height: this.legHeight,
                 tessellation: 16,
             },
             scene
         );
-        this.leg.position = new Vector3(0, legHeight / 2, 0);
+        this.leg.position = new Vector3(0, this.legHeight / 2, 0);
         const legMat = new StandardMaterial('chairLegMat', scene);
         legMat.diffuseColor = new Color3(0.5, 0.4, 0.3); // 深色支架
         legMat.backFaceCulling = false;
@@ -59,5 +61,13 @@ export class Chair {
         this.leg.parent = this.seat;
 
         this.seat.rotation.x = Math.PI;
+    }
+
+    public getMesh() {
+        return this.seat;
+    }
+
+    public getLegHeight() {
+        return this.legHeight;
     }
 }

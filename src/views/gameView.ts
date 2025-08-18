@@ -9,6 +9,7 @@ import { Table } from '../components/scene/table'; // 賭桌元件
 import { Chair } from '../components/scene/chair'; // 椅子元件
 import { Dice } from '../components/dices/dice'; // 骰子元件
 import { SelfPlayer } from '../components/players/self';
+import { Dealer } from '../components/dealer/dealer'; // 荷官元件
 import { PlayerCamera } from '../components/cameras/playerCamera'; // 玩家相機元件
 import { DevCamera } from '../components/cameras/devCamera'; // 開發用上帝視角相機元件
 import { InputManager } from '../managers/inputManager'; // 輸入管理器
@@ -30,6 +31,7 @@ export class GameView {
     public chair: Chair; // 椅子物件
     public selfPlayer: SelfPlayer; // 玩家物件（SelfPlayer）
     public dice: Dice; // 骰子物件
+    public dealer: Dealer; // 荷官物件
 
     /**
      * 建構子：初始化引擎與場景，並建立主要場景物件
@@ -38,6 +40,7 @@ export class GameView {
     constructor(canvas: HTMLCanvasElement) {
         this.engine = new Engine(canvas, true); // 建立 Babylon.js 引擎
         this.scene = new Scene(this.engine); // 建立場景
+
         this.physicsManager = new PhysicsManager(this.scene);
     }
 
@@ -90,7 +93,7 @@ export class GameView {
         await this.physicsManager.enablePhysics(); // 啟用物理系統
         this._initLight(); // 初始化光源
         this._initFloor(); // 建立地板
-        this._initTable(); // 加入賭桌、椅子
+        this._initTableAndChair(); // 加入賭桌、椅子
         this._initDice(); // 加入骰子物件
         this._initWalls(); // 建立四面牆壁
 
@@ -99,6 +102,8 @@ export class GameView {
         this._initSelfPlayer(); // 加入玩家物件
         this._initDevCamera(canvas); // 初始化開發用相機
         this.inputManager.bindCallbackOnKeyboardC(() => this.switchCamera(), 'switchCamera'); // 綁定切換相機事件
+
+        this._initDealer();
 
         // 綁定 x 鍵讓骰子彈起來（統一用 inputManager）
         this.inputManager.bindCallbackOnKeyboardX(() => {
@@ -118,7 +123,7 @@ export class GameView {
         this._showInspector(); // 顯示場景偵測器（開發用）
 
         // await this.doFrameGraph(); // 套用一個編輯器拉節點，注意輸入輸出，效果有點類似shader
-        await this.doNodeMaterial(); // 基本上就是shader
+        // await this.doNodeMaterial(); // 基本上就是shader
     }
 
     /**
@@ -161,6 +166,32 @@ export class GameView {
     }
 
     /**
+     * 初始化荷官物件，放置於賭桌旁
+     */
+    private _initDealer() {
+        const dealerPosition = new Vector3(0, 0, -1);
+        const scale = 3;
+        const dealerScale = new Vector3(scale, scale, scale);
+        // 等待模型載入後將 mesh 加入場景
+        const checkMesh = () => {
+            const mesh = this.dealer.getMesh();
+            if (mesh) {
+                mesh.setEnabled(true);
+                mesh.position = dealerPosition;
+                mesh.scaling = dealerScale;
+            } else {
+                // 若尚未載入，持續檢查直到有 mesh
+                setTimeout(checkMesh, 100);
+            }
+
+            this.dealer.playAniGlad();
+            console.log('荷官物件已初始化', this.dealer.getAnimationGroups());
+        };
+        
+        this.dealer = new Dealer(this.scene, checkMesh);
+    }
+
+    /**
      * 初始化場景光源（半球光）
      */
     private _initLight() {
@@ -179,14 +210,18 @@ export class GameView {
      * 建立賭桌元件
      * 場景中央加入賭桌物件
      */
-    private _initTable() {
+    private _initTableAndChair() {
         this.table = new Table(this.scene);
-        this.table.mesh.position = new Vector3(0, 2.5, 0);
+        // 高度y在元件裡已經跟元件高適配
+        this.table.mesh.position.x = 0;
+        this.table.mesh.position.z = 0;
 
         this.physicsManager.addPhysics(this.table.mesh, PhysicsMotionType.STATIC, true);
 
         this.chair = new Chair(this.scene);
-        this.chair.seat.position = new Vector3(0, 1.2, 8);
+        // 高度y在元件裡已經跟元件高適配
+        this.chair.seat.position.x = 0;
+        this.chair.seat.position.z = 8;
     }
 
     /**

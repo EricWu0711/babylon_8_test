@@ -1,5 +1,6 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
     mode: 'development',
@@ -9,15 +10,14 @@ module.exports = {
         path: path.resolve(__dirname, 'dist'),
     },
     resolve: {
-        extensions: ['.ts', '.js'],
+        extensions: [".tsx", ".ts", ".js"],
         fallback: {
             fs: false,
-            path: false,
-            os: false,
+            'path': false, // ammo.js seems to also use path
         },
         alias: {
-            '@res': path.resolve(__dirname, 'res'),
-        },
+            '@res': path.resolve(__dirname, 'res')
+        }
     },
     module: {
         rules: [
@@ -26,11 +26,24 @@ module.exports = {
                 use: 'ts-loader',
                 exclude: /node_modules/,
             },
+            {
+                test: /\.(png|jpe?g|gif|glb|gltf)$/i,
+                loader: 'file-loader',
+                options: {
+                    publicPath: './',
+                    name: '[name].[ext]'
+                },
+            }
         ],
     },
     plugins: [
         new HtmlWebpackPlugin({
             template: 'public/index.html',
+        }),
+        new CopyWebpackPlugin({
+            patterns: [
+            { from: 'res', to: 'res' },
+            ],
         }),
     ],
     devServer: {
