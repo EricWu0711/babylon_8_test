@@ -1,5 +1,6 @@
 import { IControllable } from '../constants/interfaces';
 
+const interactBtn = [ 'w', 'a', 's', 'd', 'c', 'x'];
 /**
  * 輸入管理器
  * 集中監聽鍵盤與滑鼠事件，並分派動作給目前註冊的可控制物件
@@ -7,6 +8,8 @@ import { IControllable } from '../constants/interfaces';
 export class InputManager {
     private controllable: { [key: string]: IControllable } = {};
     private controllList: string[] = [];
+    private keyboardConfigs: { [key: string]: { [key: string]: () => void } } = {};
+    private pressedKeys: { [key: string]: boolean } = {};
     private eventsOnKeyboardC: { [key: string]: () => void } = {};
     private eventsNameOnC: string[] = [];
     private eventsOnKeyboardX: { [key: string]: () => void } = {};
@@ -20,9 +23,26 @@ export class InputManager {
      * 註冊目前要被控制的物件
      * @param obj IControllable - 需實作 IControllable 介面
      */
-    public setControllable(obj: IControllable, name: string) {
+    public setControllable(obj: IControllable, name: string, keyboardConfig: { [key: string]: () => void }) {
         this.controllable[name] = obj;
         this.controllList.push(name);
+        this.keyboardConfigs[name] = keyboardConfig;
+    }
+
+    /**
+     * 檢查鍵盤輸入並執行對應動作
+     */
+    public checkKeyboardInput() {
+        for (const name of this.controllList) {
+            const config = this.keyboardConfigs[name];
+            if (config) {
+                for (const key in config) {
+                    if (this.pressedKeys[key]) {
+                        config[key]();
+                    }
+                }
+            }
+        }
     }
 
     public bindCallbackOnKeyboardC(callback: () => void, eventName: string) {
@@ -34,6 +54,7 @@ export class InputManager {
         this.eventsOnKeyboardX[eventName] = callback;
         this.eventsNameOnX.push(eventName);
     }
+
     /**
      * 綁定鍵盤與滑鼠事件，解析並分派動作
      */
@@ -41,28 +62,8 @@ export class InputManager {
         // 鍵盤事件
         window.addEventListener('keydown', (e) => {
             switch (e.key.toLowerCase()) {
-                case 'w':
-                    for (const name of this.controllList) {
-                        if (typeof this.controllable[name].moveForward === 'function')
-                            this.controllable[name].moveForward();
-                    }
-                    break;
-                case 's':
-                    for (const name of this.controllList) {
-                        if (typeof this.controllable[name].moveBackward === 'function')
-                            this.controllable[name].moveBackward();
-                    }
-                    break;
-                case 'a':
-                    for (const name of this.controllList) {
-                        if (typeof this.controllable[name].moveLeft === 'function') this.controllable[name].moveLeft();
-                    }
-                    break;
-                case 'd':
-                    for (const name of this.controllList) {
-                        if (typeof this.controllable[name].moveRight === 'function')
-                            this.controllable[name].moveRight();
-                    }
+                case 'w': case 's': case 'a': case 'd':
+                    this.pressedKeys[e.key.toLowerCase()] = true;
                     break;
                 case 'c':
                     for (const name of this.eventsNameOnC) {
@@ -73,6 +74,14 @@ export class InputManager {
                     for (const name of this.eventsNameOnX) {
                         this.eventsOnKeyboardX[name]();
                     }
+                    break;
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            switch (e.key.toLowerCase()) {
+                case 'w': case 's': case 'a': case 'd':
+                    this.pressedKeys[e.key.toLowerCase()] = false;
                     break;
             }
         });
@@ -99,5 +108,9 @@ export class InputManager {
         window.addEventListener('mouseup', () => {
             this.isDragging = false;
         });
+    }
+
+    public get PressedKeys() {
+        return this.pressedKeys;
     }
 }

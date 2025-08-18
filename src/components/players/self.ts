@@ -7,6 +7,7 @@ const MOVE_SPEED = 0.2; // 移動速度
  * 玩家物件（簡單直立橢圓形表示）
  */
 export class SelfPlayer implements IControllable {
+    public name: string = 'selfPlayer';
     public mesh: Mesh;
 
     /**
@@ -18,7 +19,7 @@ export class SelfPlayer implements IControllable {
     constructor(scene: Scene, height: number = 5, radius: number = 0.5) {
         // 直立橢圓形（橢圓柱）
         this.mesh = MeshBuilder.CreateSphere(
-            'selfPlayer',
+            this.name,
             {
                 diameterX: radius * 2,
                 diameterY: height,
@@ -34,49 +35,4 @@ export class SelfPlayer implements IControllable {
         this.mesh.material = mat;
     }
 
-    /**
-     * 朝向前進
-     */
-    public moveForward(): void {
-        // const forward = new Vector3(Math.sin(this.mesh.rotation.y), 0, Math.cos(this.mesh.rotation.y));
-        // forward.normalize();
-        // this.mesh.position.addInPlace(forward.scale(MOVE_SPEED));
-    }
-
-    /**
-     * 朝向後退
-     */
-    public moveBackward(): void {
-        // const backward = new Vector3(-Math.sin(this.mesh.rotation.y), 0, -Math.cos(this.mesh.rotation.y));
-        // backward.normalize();
-        // this.mesh.position.addInPlace(backward.scale(MOVE_SPEED));
-    }
-
-    /**
-     * 朝向左移
-     */
-    public moveLeft(): void {
-        //     const left = new Vector3(
-        //         Math.sin(this.mesh.rotation.y - Math.PI / 2),
-        //         0,
-        //         Math.cos(this.mesh.rotation.y - Math.PI / 2)
-        //     );
-        //     left.normalize();
-        //     this.mesh.position.addInPlace(left.scale(MOVE_SPEED));
-    }
-
-    /**
-     * 朝向右移
-     */
-    public moveRight(): void {
-        // const right = new Vector3(
-        //     Math.sin(this.mesh.rotation.y + Math.PI / 2),
-        //     0,
-        //     Math.cos(this.mesh.rotation.y + Math.PI / 2)
-        // );
-        // right.normalize();
-        // this.mesh.position.addInPlace(right.scale(MOVE_SPEED));
-    }
-
-    public rotateBy(dx: number, dy: number): void {}
 }

@@ -5,6 +5,7 @@ import { GameType, GameState, PlayerAction, ChipValue, CardSuit, CardRank, BetRe
  * 所有可被 InputManager 控制的元件（如相機、角色）都需實作這些方法
  */
 export interface IControllable {
+    name: string; // 物件名稱
     moveForward?(): void;
     moveBackward?(): void;
     moveLeft?(): void;

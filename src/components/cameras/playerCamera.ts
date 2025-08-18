@@ -9,6 +9,7 @@ const CAMERA_ROTATION_SPEED = 0.1; // 相機旋轉速度
  * @description 建立並管理 UniversalCamera，支援視角控制與目標切換
  */
 export class PlayerCamera implements IControllable {
+    public name: string = 'playerCamera'; // 相機名稱
     public camera: UniversalCamera; // Babylon.js UniversalCamera 實例
 
     /**
@@ -18,7 +19,7 @@ export class PlayerCamera implements IControllable {
      * @param startPosition Vector3 - 相機初始位置，預設 (0, 2, -10)
      */
     constructor(scene: Scene, canvas: HTMLCanvasElement, startPosition: Vector3 = new Vector3(0, 2, -20)) {
-        this.camera = new UniversalCamera('playerCamera', startPosition, scene); // 建立 UniversalCamera
+        this.camera = new UniversalCamera(this.name, startPosition, scene); // 建立 UniversalCamera
 
         // 啟用鍵鼠控制
         this.camera.attachControl(canvas, true);
@@ -50,6 +51,19 @@ export class PlayerCamera implements IControllable {
         this.camera.keysDown = [];
         this.camera.keysLeft = [];
         this.camera.keysRight = [];
+    }
+
+    /**
+     * 取得鍵盤控制設定
+     * @returns { [key: string]: () => void }
+     */
+    public getKeyboardConfig(): { [key: string]: () => void } {
+        return {
+            'w': this.moveForward.bind(this),
+            's': this.moveBackward.bind(this),
+            'a': this.moveLeft.bind(this),
+            'd': this.moveRight.bind(this)
+        };
     }
 
     /**

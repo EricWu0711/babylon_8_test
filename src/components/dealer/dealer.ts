@@ -38,14 +38,12 @@ export class Dealer {
 		this.loadModel(callback);
 	}
 
-	/**
-	 * 載入荷官模型
-	 */
+	//#region load model
 	private async loadModel(callback: Function) {
 		await this.modelManager.preloadModel(this.modelName, this.modelPath);
 		const cloneModel = this.modelManager.prepareModel(this.scene, this.modelName, 'dealer', 'main');
 		if (cloneModel && cloneModel.cloneMesh0) {
-            console.log('荷官模型已載入', cloneModel);
+            // console.log('荷官模型已載入', cloneModel);
             this.afterLoaded(cloneModel);
 			this.mesh.rotation = new Vector3(0, 0, 0);
 		}
@@ -69,29 +67,43 @@ export class Dealer {
 			});
 		});
     }
+    //#endregion
 
-	public playAnimation(animationName: string, isLoop: boolean): void {
+    //#region animation
+	public playAnimation(animationName: string, isLoop: boolean, speedRatio: number = 1.0): void {
 		if(this.animationGroups[animationName])
-			this.animationGroups[animationName].start(isLoop, 1.0, this.animationGroups[animationName].from, this.animationGroups[animationName].to, false);
+			this.animationGroups[animationName].start(isLoop, speedRatio, this.animationGroups[animationName].from, this.animationGroups[animationName].to, false);
 		else
 			console.error("playAnimation", animationName, "is not exist");
 	}
 
-    public playAniGlad() {
+    public playGlad() {
         this.playAnimation('glad', true);
     }
 
+    public playMove() {
+        this.playAnimation('move', true);
+    }
+
+    public playAttack01() {
+        this.playAnimation('attack01', true);
+    }
+
+    //#endregion
+
+    //#region getter
 	/**
 	 * 取得荷官 Mesh
 	 */
-	public getMesh() {
+	public get Mesh() {
 		return this.mesh;
 	}
 
     /**
      * 取得荷官動畫群組
      */
-    public getAnimationGroups() {
+    public get AnimationGroups() {
         return this.animationGroups;
     }
+    //#endregion
 }

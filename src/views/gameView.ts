@@ -84,6 +84,8 @@ export class GameView {
                     diceStopped = false;
                 }
             }
+            
+            this.inputManager.checkKeyboardInput();
 
             this.scene.render(); // 渲染場景
         });
@@ -91,19 +93,97 @@ export class GameView {
 
     public async init(canvas: HTMLCanvasElement) {
         await this.physicsManager.enablePhysics(); // 啟用物理系統
+
+        this._initInputManager();
         this._initLight(); // 初始化光源
         this._initFloor(); // 建立地板
         this._initTableAndChair(); // 加入賭桌、椅子
         this._initDice(); // 加入骰子物件
         this._initWalls(); // 建立四面牆壁
 
-        this._initInputManager();
         this._initPlayerCamera(canvas, new Vector3(0, 5, 15)); // 初始化玩家相機
         this._initSelfPlayer(); // 加入玩家物件
         this._initDevCamera(canvas); // 初始化開發用相機
         this.inputManager.bindCallbackOnKeyboardC(() => this.switchCamera(), 'switchCamera'); // 綁定切換相機事件
 
         this._initDealer();
+
+        this._showInspector(); // 顯示場景偵測器（開發用）
+
+        // await this.doFrameGraph(); // 套用一個編輯器拉節點，注意輸入輸出，效果有點類似shader
+        // await this.doNodeMaterial(); // 基本上就是shader
+    }
+
+
+    /**
+     * 初始化玩家相機（第一人稱視角）
+     * @param canvas HTMLCanvasElement - 用於控制相機的畫布
+     */
+    private _initPlayerCamera(canvas: HTMLCanvasElement, startPosition: Vector3 = new Vector3(0, 5, -15)) {
+        this.playerCamera = new PlayerCamera(this.scene, canvas, startPosition);
+        this.playerCamera.setTarget(new Vector3(0, 5, 0)); // 設定相機目標位置
+
+        this.playerCamera.beforeBindInputManager();
+        this.inputManager.setControllable(this.playerCamera, 'playerCamera', this.playerCamera.getKeyboardConfig()); // 綁定輸入管理器與玩家相機
+    }
+
+    /**
+     * 建立玩家物件（SelfPlayer）
+     * 場景中央加入玩家物件
+     */
+    private _initSelfPlayer() {
+        this.selfPlayer = new SelfPlayer(this.scene);
+        this.selfPlayer.mesh.position = new Vector3(0, 2.5, 0); // 玩家物件放置於場景中央
+    }
+
+    /**
+     * 初始化荷官物件，放置於賭桌旁
+     */
+    private _initDealer() {
+        const dealerPosition = new Vector3(0, 0, -1);
+        const scale = 3;
+        const dealerScale = new Vector3(scale, scale, scale);
+        // 等待模型載入後將 mesh 加入場景
+        const afterInit = () => {
+            const mesh = this.dealer.Mesh;
+            if (mesh) {
+                mesh.setEnabled(true);
+                mesh.position = dealerPosition;
+                mesh.scaling = dealerScale;
+            } else {
+                // 若尚未載入，持續檢查直到有 mesh
+                setTimeout(afterInit, 100);
+            }
+
+            this.dealer.playGlad();
+            console.log('荷官物件已初始化', this.dealer.AnimationGroups);
+        };
+        
+        this.dealer = new Dealer(this.scene, afterInit);
+    }
+
+    /**
+     * 建立骰子物件並放置於桌面中央
+     */
+    private _initDice() {
+        this.dice = new Dice(this.scene, 0.5);
+        // 放在桌面正中央上方
+        this.dice.mesh.position = this.table.mesh.position.add(new Vector3(0, 3, 3));
+        // 加入物理效果
+        this.physicsManager.addPhysics(this.dice.mesh, PhysicsMotionType.DYNAMIC, false);
+
+        // 隨機滾動：給予隨機線性與角速度
+        const randomLinear = new Vector3((Math.random() - 0.5) * 10, Math.random() * 5 + 5, (Math.random() - 0.5) * 10);
+        const randomAngular = new Vector3(
+            (Math.random() - 0.5) * 10,
+            (Math.random() - 0.5) * 10,
+            (Math.random() - 0.5) * 10
+        );
+        if (this.dice.mesh.physicsBody) {
+            this.dice.mesh.physicsBody.setLinearVelocity(randomLinear);
+            this.dice.mesh.physicsBody.setAngularVelocity(randomAngular);
+            console.log('骰子隨機滾動', randomLinear, randomAngular);
+        }
 
         // 綁定 x 鍵讓骰子彈起來（統一用 inputManager）
         this.inputManager.bindCallbackOnKeyboardX(() => {
@@ -119,31 +199,6 @@ export class GameView {
                 console.log('骰子隨機飛起！', impulse);
             }
         }, 'diceJump');
-
-        this._showInspector(); // 顯示場景偵測器（開發用）
-
-        // await this.doFrameGraph(); // 套用一個編輯器拉節點，注意輸入輸出，效果有點類似shader
-        // await this.doNodeMaterial(); // 基本上就是shader
-    }
-
-    /**
-     * 初始化輸入管理器
-     */
-    private _initInputManager() {
-        this.inputManager = new InputManager();
-        this.inputManager.bindEvents();
-    }
-
-    /**
-     * 初始化玩家相機（第一人稱視角）
-     * @param canvas HTMLCanvasElement - 用於控制相機的畫布
-     */
-    private _initPlayerCamera(canvas: HTMLCanvasElement, startPosition: Vector3 = new Vector3(0, 5, -15)) {
-        this.playerCamera = new PlayerCamera(this.scene, canvas, startPosition);
-        this.playerCamera.beforeBindInputManager();
-        this.playerCamera.setTarget(new Vector3(0, 5, 0)); // 設定相機目標位置
-
-        this.inputManager.setControllable(this.playerCamera, 'playerCamera'); // 綁定輸入管理器與玩家相機
     }
 
     /**
@@ -155,40 +210,11 @@ export class GameView {
     }
 
     /**
-     * 建立玩家物件（SelfPlayer）
-     * 場景中央加入玩家物件
+     * 初始化輸入管理器
      */
-    private _initSelfPlayer() {
-        this.selfPlayer = new SelfPlayer(this.scene);
-        this.selfPlayer.mesh.position = new Vector3(0, 2.5, 0); // 玩家物件放置於場景中央
-
-        this.inputManager.setControllable(this.selfPlayer, 'selfPlayer'); // 綁定輸入管理器與玩家物件
-    }
-
-    /**
-     * 初始化荷官物件，放置於賭桌旁
-     */
-    private _initDealer() {
-        const dealerPosition = new Vector3(0, 0, -1);
-        const scale = 3;
-        const dealerScale = new Vector3(scale, scale, scale);
-        // 等待模型載入後將 mesh 加入場景
-        const checkMesh = () => {
-            const mesh = this.dealer.getMesh();
-            if (mesh) {
-                mesh.setEnabled(true);
-                mesh.position = dealerPosition;
-                mesh.scaling = dealerScale;
-            } else {
-                // 若尚未載入，持續檢查直到有 mesh
-                setTimeout(checkMesh, 100);
-            }
-
-            this.dealer.playAniGlad();
-            console.log('荷官物件已初始化', this.dealer.getAnimationGroups());
-        };
-        
-        this.dealer = new Dealer(this.scene, checkMesh);
+    private _initInputManager() {
+        this.inputManager = new InputManager();
+        this.inputManager.bindEvents();
     }
 
     /**
@@ -222,30 +248,6 @@ export class GameView {
         // 高度y在元件裡已經跟元件高適配
         this.chair.seat.position.x = 0;
         this.chair.seat.position.z = 8;
-    }
-
-    /**
-     * 建立骰子物件並放置於桌面中央
-     */
-    private _initDice() {
-        this.dice = new Dice(this.scene, 0.5);
-        // 放在桌面正中央上方
-        this.dice.mesh.position = this.table.mesh.position.add(new Vector3(0, 3, 3));
-        // 加入物理效果
-        this.physicsManager.addPhysics(this.dice.mesh, PhysicsMotionType.DYNAMIC, false);
-
-        // 隨機滾動：給予隨機線性與角速度
-        const randomLinear = new Vector3((Math.random() - 0.5) * 10, Math.random() * 5 + 5, (Math.random() - 0.5) * 10);
-        const randomAngular = new Vector3(
-            (Math.random() - 0.5) * 10,
-            (Math.random() - 0.5) * 10,
-            (Math.random() - 0.5) * 10
-        );
-        if (this.dice.mesh.physicsBody) {
-            this.dice.mesh.physicsBody.setLinearVelocity(randomLinear);
-            this.dice.mesh.physicsBody.setAngularVelocity(randomAngular);
-            console.log('骰子隨機滾動', randomLinear, randomAngular);
-        }
     }
 
     /**
