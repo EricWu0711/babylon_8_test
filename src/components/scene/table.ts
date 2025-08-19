@@ -88,11 +88,11 @@ export class Table {
         this.mesh.rotation.x = Math.PI;
     }
 
-    public getMesh() {
+    public get Mesh() {
         return this.mesh;
     }
 
-    public getLegHeight() {
+    public get LegHeight() {
         return this.legHeight;
     }
 }

@@ -63,11 +63,11 @@ export class Chair {
         this.seat.rotation.x = Math.PI;
     }
 
-    public getMesh() {
+    public get Mesh() {
         return this.seat;
     }
 
-    public getLegHeight() {
+    public get LegHeight() {
         return this.legHeight;
     }
 }

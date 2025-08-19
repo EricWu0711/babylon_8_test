@@ -1,8 +1,9 @@
-import { Engine, Scene, Vector3, PassPostProcess, NodeRenderGraph, NodeMaterial } from '@babylonjs/core'; // Babylon.js 核心模組
+import { Engine, Scene, Vector3, PassPostProcess, NodeRenderGraph, NodeMaterial, StandardMaterial, Texture, Color3 } from '@babylonjs/core'; // Babylon.js 核心模組
 import '@babylonjs/inspector'; // Babylon.js 場景偵測器
 import { PhysicsMotionType } from '@babylonjs/core/Physics/v2';
-
+import { registerBuiltInLoaders } from "@babylonjs/loaders/dynamic";
 import { HLight } from '../components/lights/hemisphericLight'; // 半球光元件
+import { DLight } from '../components/lights/directionalLight'; // 定向光元件
 import { Floor } from '../components/scene/floor'; // 地板元件
 import { Wall } from '../components/scene/wall'; // 牆壁元件
 import { Table } from '../components/scene/table'; // 賭桌元件
@@ -26,11 +27,13 @@ export class GameView {
     public playerCamera: PlayerCamera; // 玩家相機
     public devCamera: DevCamera; // 開發用相機
     public inputManager: InputManager; // 輸入管理器
+    public walls: Wall[] = []; // 牆壁物件列表
     public floor: Floor; // 地板物件
     public table: Table; // 賭桌物件
     public chair: Chair; // 椅子物件
     public selfPlayer: SelfPlayer; // 玩家物件（SelfPlayer）
-    public dice: Dice; // 骰子物件
+    public dice1: Dice; // 骰子物件
+    public dice2: Dice; // 骰子物件
     public dealer: Dealer; // 荷官物件
 
     /**
@@ -42,6 +45,7 @@ export class GameView {
         this.scene = new Scene(this.engine); // 建立場景
 
         this.physicsManager = new PhysicsManager(this.scene);
+        registerBuiltInLoaders();
     }
 
     /**
@@ -141,22 +145,17 @@ export class GameView {
      */
     private _initDealer() {
         const dealerPosition = new Vector3(0, 0, -1);
-        const scale = 3;
+        const scale = 4;
         const dealerScale = new Vector3(scale, scale, scale);
-        // 等待模型載入後將 mesh 加入場景
-        const afterInit = () => {
-            const mesh = this.dealer.Mesh;
-            if (mesh) {
-                mesh.setEnabled(true);
-                mesh.position = dealerPosition;
-                mesh.scaling = dealerScale;
-            } else {
-                // 若尚未載入，持續檢查直到有 mesh
-                setTimeout(afterInit, 100);
-            }
 
-            this.dealer.playGlad();
-            console.log('荷官物件已初始化', this.dealer.AnimationGroups);
+        const afterInit = (dealer: Dealer) => {
+            const mesh = dealer.Mesh;
+            mesh.setEnabled(true);
+            mesh.position = dealerPosition;
+            mesh.scaling = dealerScale;
+
+            dealer.playGlad();
+            // console.log('荷官物件已初始化', dealer.AnimationGroups);
         };
 
         this.dealer = new Dealer(this.scene, 1, afterInit);
@@ -166,49 +165,59 @@ export class GameView {
      * 建立骰子物件並放置於桌面中央
      */
     private _initDice() {
-        const dicePosition = new Vector3(0, 8, 3); // 骰子放在桌面正中央上方
+        
+        const afterInit = (dice: Dice) => {
+            const dicePosition = new Vector3(Math.random() * 3, 8, Math.random() * 3);
+            dice.Mesh.position = dicePosition;
 
-        const afterInit = () => {
-            this.dice.Mesh.position = dicePosition;
+            // (this.dice.Mesh.material as StandardMaterial).emissiveColor = new Color3(1, 1, 1);
 
             // 加入物理效果
-            this.physicsManager.addPhysics(this.dice.Mesh, PhysicsMotionType.DYNAMIC, false, 1);
+            this.physicsManager.addPhysics(dice.Mesh, PhysicsMotionType.DYNAMIC, false, 1);
 
             // // 隨機滾動：給予隨機線性與角速度
-            // const randomLinear = new Vector3(
-            //     (Math.random() - 0.5) * 10,
-            //     Math.random() * 5 + 5,
-            //     (Math.random() - 0.5) * 10
-            // );
-            // const randomAngular = new Vector3(
-            //     (Math.random() - 0.5) * 10,
-            //     (Math.random() - 0.5) * 10,
-            //     (Math.random() - 0.5) * 10
-            // );
+            const randomLinear = new Vector3(
+                (Math.random() - 0.5) * 10,
+                Math.random() * 5 + 5,
+                (Math.random() - 0.5) * 10
+            );
+            const randomAngular = new Vector3(
+                (Math.random() - 0.5) * 10,
+                (Math.random() - 0.5) * 10,
+                (Math.random() - 0.5) * 10
+            );
 
-            // if (this.dice.Mesh.physicsBody) {
-            //     this.dice.Mesh.physicsBody.setLinearVelocity(randomLinear);
-            //     this.dice.Mesh.physicsBody.setAngularVelocity(randomAngular);
-            //     console.log('骰子隨機滾動', randomLinear, randomAngular);
-            // }
+            if (dice.Mesh.physicsBody) {
+                dice.Mesh.physicsBody.setLinearVelocity(randomLinear);
+                dice.Mesh.physicsBody.setAngularVelocity(randomAngular);
+            }
 
-            // // 綁定 x 鍵讓骰子彈起來（統一用 inputManager）
-            // this.inputManager.bindCallbackOnKeyboardX(() => {
-            //     if (this.dice && this.dice.Mesh.physicsBody) {
-            //         // 隨機方向 impulse
-            //         const impulse = new Vector3(
-            //             (Math.random() - 0.5) * 100, // X方向
-            //             Math.random() * 150 + 1500, // Y方向（向上）
-            //             (Math.random() - 0.5) * 100 // Z方向
-            //         );
-            //         const pos = this.dice.Mesh.position;
-            //         this.dice.Mesh.physicsBody.applyImpulse(impulse, pos);
-            //         console.log('骰子隨機飛起！', impulse);
-            //     }
-            // }, 'diceJump');
-        };
+            // 綁定 x 鍵讓骰子彈起來（統一用 inputManager）
+            this.inputManager.bindCallbackOnKeyboardX(() => {
+                if (dice && dice.Mesh.physicsBody) {
+                    // 隨機方向 impulse
+                    const impulse = new Vector3(
+                        (Math.random() - 0.5) * 10, // X方向
+                        Math.random() * 1.5 + 4,  // Y方向（向上）
+                        (Math.random() - 0.5) * 10  // Z方向
+                    );
+                    const pos = dice.Mesh.position;
+                    dice.Mesh.physicsBody.applyImpulse(impulse, pos);
 
-        this.dice = new Dice(this.scene, 1, 0.25, afterInit);
+                    // 額外給予隨機角速度，讓骰子飛起時有更多滾動
+                    const angular = new Vector3(
+                        (Math.random() - 0.5) * 20,
+                        (Math.random() - 0.5) * 20,
+                        (Math.random() - 0.5) * 20
+                    );
+                    dice.Mesh.physicsBody.setAngularVelocity(angular);
+                }
+            }, 'diceJump'+ dice.Uid);
+        }
+
+        // this.dice = new Dice(this.scene, 1, 0.25, afterInit);
+        this.dice1 = new Dice(this.scene, 1, 1, afterInit);
+        this.dice2 = new Dice(this.scene, 2, 1, afterInit);
     }
 
     /**
@@ -232,6 +241,7 @@ export class GameView {
      */
     private _initLight() {
         new HLight(this.scene); // 建立半球光元件
+        new DLight(this.scene); // 建立定向光元件
     }
 
     /**
@@ -258,20 +268,24 @@ export class GameView {
         // 高度y在元件裡已經跟元件高適配
         this.chair.seat.position.x = 0;
         this.chair.seat.position.z = 8;
+        this.physicsManager.addPhysics(this.chair.Mesh, PhysicsMotionType.STATIC, true);
     }
 
     /**
      * 建立四面牆壁元件
      */
     private _initWalls() {
-        // 前牆
-        new Wall(this.scene, new Vector3(0, 5, -50), 100, 10, 1);
-        // 後牆
-        new Wall(this.scene, new Vector3(0, 5, 50), 100, 10, 1);
-        // 左牆
-        new Wall(this.scene, new Vector3(-50, 5, 0), 1, 10, 100);
-        // 右牆
-        new Wall(this.scene, new Vector3(50, 5, 0), 1, 10, 100);
+        const length = 100;
+        const height = 20;
+        this.walls.push(
+            new Wall(this.scene, new Vector3(0, height / 2, -length/2), length, height, 'w'), // 前牆
+            new Wall(this.scene, new Vector3(0, height / 2, length/2), length, height, 's'), // 後牆
+            new Wall(this.scene, new Vector3(-length/2, height / 2, 0), length, height, 'a'), // 左牆
+            new Wall(this.scene, new Vector3(length/2, height / 2, 0), length, height, 'd') // 右牆
+        );
+        for(const wall of this.walls) {
+            this.physicsManager.addPhysics(wall.mesh, PhysicsMotionType.STATIC, true);
+        }
     }
 
     private async doFrameGraph() {
@@ -314,6 +328,7 @@ export class GameView {
         );
         // this.table.Mesh.material = nodeMaterial;
         // this.floor.Mesh.material = nodeMaterial;
-        this.dice.Mesh.material = nodeMaterial;
+        this.dice1.Mesh.material = nodeMaterial;
+        this.dice2.Mesh.material = nodeMaterial;
     }
 }

@@ -1,4 +1,4 @@
-import { MeshBuilder, Mesh, StandardMaterial, Color3, Scene, Vector3, MultiMaterial, SubMesh } from '@babylonjs/core';
+import { MeshBuilder, Mesh, StandardMaterial, Color3, Scene, Vector3, MultiMaterial, SubMesh, Texture } from '@babylonjs/core';
 import ModelManager from '../../managers/modelsManager';
 
 /**
@@ -12,6 +12,7 @@ export class Dice {
     private modelManager: ModelManager;
     private modelName: string = 'dice';
     private modelPath: string = './res/models/dice.glb';
+    // private modelPath: string = './res/models/dice/dice.obj';
     // private modelPath: string = './res/models/dice_2.glb';
 
     private mesh: Mesh;
@@ -38,12 +39,11 @@ export class Dice {
         await this.modelManager.preloadModel(this.modelName, this.modelPath);
         const cloneModel = this.modelManager.prepareModel(this.scene, this.modelName, 'dice', this.uid.toString());
         if (cloneModel && cloneModel.cloneMesh0) {
-            console.log('骰子模型已載入', this.uid, cloneModel);
             this.afterLoaded(cloneModel);
             this.mesh.rotation = new Vector3(0, 0, 0);
             this.mesh.scaling = new Vector3(this.scaleSize, this.scaleSize, this.scaleSize);
         }
-        callback();
+        callback(this);
     }
 
     private afterLoaded(cloneModel: any) {
@@ -145,6 +145,13 @@ export class Dice {
      */
     public get Mesh() {
         return this.mesh;
+    }
+
+    /**
+     * 取得骰子uid
+     */
+    public get Uid() {
+        return this.uid;
     }
     //#endregion
 }

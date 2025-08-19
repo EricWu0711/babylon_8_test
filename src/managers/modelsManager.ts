@@ -1,11 +1,11 @@
-
-import { Scene, Mesh, Vector3, AnimationGroup, Skeleton, AssetsManager, MeshAssetTask } from '@babylonjs/core';
-
+import { Scene, Mesh, Vector3, AnimationGroup, Skeleton, AssetsManager, MeshAssetTask, Tags } from '@babylonjs/core';
 
 class ModelsManager {
     private static instance: ModelsManager;
     private scene: Scene;
     private models: Record<string, any>;
+    private saveModels: { [key: string]: any } = {};
+    private preloadPromises: { [key: string]: Promise<void> } = {};
 
     constructor(scene: Scene) {
         this.scene = scene;
@@ -18,14 +18,41 @@ class ModelsManager {
      * @param modelPath 模型路徑
      */
     public preloadModel(modelName: string, modelPath: string): Promise<void> {
-        return new Promise((resolve, reject) => {
+        const key = modelName + '_' + modelPath;
+        if (this.saveModels[key]) {
+            console.log('Model already preloaded:', modelName, modelPath, this.saveModels);
+            return Promise.resolve();
+        }
+        if (typeof this.preloadPromises[key] !== 'undefined') {
+            console.log('Model is currently being preloaded:', modelName, modelPath, this.preloadPromises);
+            return this.preloadPromises[key];
+        }
+        
+        this.preloadPromises[key] = new Promise((resolve, reject) => {
             const assetsManager = new AssetsManager(this.scene);
             const meshTask = assetsManager.addMeshTask(modelName, '', '', modelPath);
 
+            // console.log('in promise:', modelName, modelPath, meshTask);
             meshTask.onSuccess = (task: MeshAssetTask) => {
+                // console.log('Model preloaded:', modelName, task);
                 if (task.loadedMeshes.length > 0) {
-                    task.loadedMeshes[0].name = modelName + '_mesh';
-                    task.loadedMeshes[0].setEnabled(false);
+                    for (let i = 0; i < task.loadedMeshes.length; i++) {
+                        const mesh = task.loadedMeshes[i];
+                        if(mesh.subMeshes && mesh.subMeshes.length > 0 && mesh.material) {
+                            mesh.parent = null;
+                            mesh.name = modelName + '_rootMesh';
+                            mesh.setEnabled(false);
+                        } else {
+                            Tags.AddTagsTo(mesh, 'dispose');
+                            mesh.name = modelName + '_dispose';
+                        }
+                    }
+
+                    const disposeMeshes = this.scene.getMeshesByTags('dispose');
+                    // console.log('Dispose meshes:', disposeMeshes);
+                    for(const mesh of disposeMeshes) {
+                        mesh.dispose();
+                    }
                 }
                 if (task.loadedAnimationGroups) {
                     task.loadedAnimationGroups.forEach((ag) => {
@@ -38,17 +65,22 @@ class ModelsManager {
                     skeletons: task.loadedSkeletons,
                     animationGroups: task.loadedAnimationGroups
                 };
-                console.log('preloadModel', modelPath, this.models[modelName]);
+                this.saveModels[key] = this.models[modelName];
+
+                // console.log('saveModels', modelPath, this.models[modelName], this.saveModels);
                 resolve();
+                delete this.preloadPromises[key];
             };
 
             meshTask.onError = (task, message, exception) => {
                 console.error('Error preloading model:', message, exception);
                 reject(exception);
+                delete this.preloadPromises[key];
             };
 
             assetsManager.load();
         });
+        return this.preloadPromises[key];
     }
 
 
@@ -60,9 +92,9 @@ class ModelsManager {
      * @param uid 唯一識別
      */
     public prepareModel(scene: Scene, modelName: string, type: string, uid: string) {
-        const root = scene.getMeshByName(modelName + '_mesh');
+        const root = scene.getMeshByName(modelName + '_rootMesh');
         if (!root) {
-            console.error(`Mesh ${modelName}_mesh not found in scene.`);
+            console.error(`Mesh ${modelName}_rootMesh not found in scene.`);
             return null;
         }
         const cloneRoot = root.instantiateHierarchy(null, { doNotInstantiate: true }, (source, clone) => {
@@ -72,7 +104,7 @@ class ModelsManager {
             console.error('Failed to clone mesh hierarchy.');
             return null;
         }
-        cloneRoot.name = modelName + '_' + uid;
+        cloneRoot.name = modelName + '_cloneMesh_' + uid;
         cloneRoot.setEnabled(true);
 
         if (!this.models[modelName] || !this.models[modelName].skeletons || this.models[modelName].skeletons.length === 0) {

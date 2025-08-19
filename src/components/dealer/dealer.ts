@@ -1,13 +1,4 @@
-import {
-    Scene,
-    Mesh,
-    Vector3,
-    AnimationGroup,
-    Skeleton,
-    AssetsManager,
-    MeshAssetTask,
-    TransformNode,
-} from '@babylonjs/core';
+import { Scene, Mesh, Vector3, AnimationGroup } from '@babylonjs/core';
 import ModelManager from '../../managers/modelsManager';
 
 // 每個模型都不一樣的動畫群組名稱
@@ -38,6 +29,9 @@ export class Dealer {
     private modelManager: ModelManager;
     private modelName: string = 'dealer';
     private modelPath: string = './res/models/angelwomon.glb';
+    // private modelPath: string = './res/models/68577793-730f-4405-97bb-9801de5294ce.glb';
+    // private modelPath: string = './res/models/ded33ed1-11eb-4386-84e2-d0917b37d264.glb';
+    // private modelPath: string = './res/models/a7e6f213-4729-4f1d-a1fd-65f85346fafc.glb';
 
     private mesh: Mesh;
     private animationGroups: { [key: string]: AnimationGroup } = {};
@@ -54,11 +48,10 @@ export class Dealer {
         await this.modelManager.preloadModel(this.modelName, this.modelPath);
         const cloneModel = this.modelManager.prepareModel(this.scene, this.modelName, 'dealer', this.uid.toString());
         if (cloneModel && cloneModel.cloneMesh0) {
-            // console.log('荷官模型已載入', this.uid, cloneModel);
             this.afterLoaded(cloneModel);
             this.mesh.rotation = new Vector3(0, 0, 0);
         }
-        callback();
+        callback(this);
     }
 
     private afterLoaded(cloneModel: any) {
