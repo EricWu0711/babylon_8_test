@@ -1,11 +1,21 @@
 import { MeshBuilder, Mesh, StandardMaterial, Color3, Scene, Vector3, MultiMaterial, SubMesh } from '@babylonjs/core';
+import ModelManager from '../../managers/modelsManager';
 
 /**
  * 六面骰子物件
  * @description 建立一個典型的六面骰子，每面有對應點數，並可計算目前朝上的點數
  */
 export class Dice {
-    public mesh: Mesh; // 骰子本體
+    private scene: Scene;
+    private uid: number;
+
+    private modelManager: ModelManager;
+    private modelName: string = 'dice';
+    private modelPath: string = './res/models/dice.glb';
+    // private modelPath: string = './res/models/dice_2.glb';
+
+    private mesh: Mesh;
+    private scaleSize: number;
     private faceMaterials: StandardMaterial[] = []; // 六面材質
     private multiMaterial: MultiMaterial; // MultiMaterial 物件
     private faceValues: number[] = [1, 2, 3, 4, 5, 6]; // 六面點數
@@ -15,13 +25,35 @@ export class Dice {
      * @param scene Babylon.js 場景
      * @param size 骰子邊長，預設 1
      */
-    constructor(scene: Scene, size: number = 1) {
-        // 建立立方體作為骰子
-        this.mesh = MeshBuilder.CreateBox('dice', { size }, scene);
-        this._createFaceMaterials(scene);
-        this._applyMultiMaterial(scene);
-        this.mesh.position = new Vector3(0, size / 2, 0); // 預設放在地面上
+    constructor(scene: Scene, uid: number, size: number = 1, callback: Function) {
+        this.scene = scene;
+        this.uid = uid;
+        this.scaleSize = size;
+        this.modelManager = ModelManager.getInstance(scene);
+        this.loadModel(callback);
     }
+
+    //#region load model
+    private async loadModel(callback: Function) {
+        await this.modelManager.preloadModel(this.modelName, this.modelPath);
+        const cloneModel = this.modelManager.prepareModel(this.scene, this.modelName, 'dice', this.uid.toString());
+        if (cloneModel && cloneModel.cloneMesh0) {
+            console.log('骰子模型已載入', this.uid, cloneModel);
+            this.afterLoaded(cloneModel);
+            this.mesh.rotation = new Vector3(0, 0, 0);
+            this.mesh.scaling = new Vector3(this.scaleSize, this.scaleSize, this.scaleSize);
+        }
+        callback();
+    }
+
+    private afterLoaded(cloneModel: any) {
+        cloneModel.cloneMesh0 && this.setMesh(cloneModel.cloneMesh0);
+    }
+
+    private setMesh(cloneMesh0: Mesh) {
+        this.mesh = cloneMesh0;
+    }
+    //#endregion
 
     /**
      * 建立六面材質，並用顏色與點數區分
@@ -106,10 +138,13 @@ export class Dice {
         }
         return this.faceValues[topFace];
     }
-}
 
-// 用法範例：
-// const dice = new Dice(scene);
-// dice.mesh.rotation = ... // 可旋轉骰子
-// const value = dice.getTopFaceValue(); // 取得目前朝上的點數
-// console.log('骰子朝上的點數:', value);
+    //#region getter
+    /**
+     * 取得骰子 Mesh
+     */
+    public get Mesh() {
+        return this.mesh;
+    }
+    //#endregion
+}

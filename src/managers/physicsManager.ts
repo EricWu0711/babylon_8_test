@@ -30,23 +30,19 @@ export class PhysicsManager {
     }
 
     /**
-     * 將 mesh 加入物理系統
-     * @param mesh 目標 Mesh
-     * @param type 'box' | 'sphere' | 'cylinder' | 'mesh'
-     * @param mass 物件質量
-     */
-    /**
      * 將 mesh 加入物理系統 (v2)
      * @param mesh 目標 Mesh
      * @param motionType 物件動態型態（PhysicsMotionType.DYNAMIC/STATIC/KINEMATIC）
      * @param startsAsleep 物件初始靜止狀態
      * @param mass 物件質量
      */
-    public addPhysics(mesh: Mesh, motionType: PhysicsMotionType, startsAsleep: boolean) {
+    public addPhysics(mesh: Mesh, motionType: PhysicsMotionType, startsAsleep: boolean, mass: number = 0) {
+        mesh.computeWorldMatrix(true);
         mesh.physicsBody = new PhysicsBody(mesh, motionType, startsAsleep, this.scene);
-        if (mesh.physicsBody) {
-            mesh.physicsBody.shape = PhysicsShapeBox.FromMesh(mesh);
-        }
-        console.log('物件已加入物理系統 (v2)', mesh.name);
+        mesh.physicsBody.shape = PhysicsShapeBox.FromMesh(mesh);
+        mesh.physicsBody.setMassProperties({
+            mass: mass,
+        });
+        console.log('物件已加入物理系統 (v2)', mesh.name, mesh, mesh.physicsBody);
     }
 }
