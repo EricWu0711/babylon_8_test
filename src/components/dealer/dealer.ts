@@ -28,10 +28,8 @@ export class Dealer {
 
     private modelManager: ModelManager;
     private modelName: string = 'dealer';
-    private modelPath: string = './res/models/angelwomon.glb';
-    // private modelPath: string = './res/models/68577793-730f-4405-97bb-9801de5294ce.glb';
-    // private modelPath: string = './res/models/ded33ed1-11eb-4386-84e2-d0917b37d264.glb';
-    // private modelPath: string = './res/models/a7e6f213-4729-4f1d-a1fd-65f85346fafc.glb';
+    // private modelPath: string = './res/models/angelwomon.glb';
+    private modelPath: string = './res/models/andromon.glb';
 
     private mesh: Mesh;
     private animationGroups: { [key: string]: AnimationGroup } = {};
