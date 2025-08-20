@@ -12,7 +12,6 @@ export class Dice {
     private modelManager: ModelManager;
     private modelName: string = 'dice';
     private modelPath: string = './res/models/dice.glb';
-    // private modelPath: string = './res/models/dice/dice.obj';
     // private modelPath: string = './res/models/dice_2.glb';
 
     private mesh: Mesh;

@@ -37,6 +37,7 @@ class ModelsManager {
                 // console.log('Model preloaded:', modelName, task);
                 if (task.loadedMeshes.length > 0) {
                     for (let i = 0; i < task.loadedMeshes.length; i++) {
+                        // console.log('task.loadedMeshes:', modelName, task.loadedMeshes[i]);
                         const mesh = task.loadedMeshes[i];
                         if(mesh.subMeshes && mesh.subMeshes.length > 0 && mesh.material) {
                             mesh.parent = null;

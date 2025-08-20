@@ -1,9 +1,10 @@
-import { Engine, Scene, Vector3, PassPostProcess, NodeRenderGraph, NodeMaterial, StandardMaterial, Texture, Color3 } from '@babylonjs/core'; // Babylon.js 核心模組
+import { Engine, Scene, Vector3, PassPostProcess, NodeRenderGraph, NodeMaterial, Quaternion, Texture, Color3 } from '@babylonjs/core'; // Babylon.js 核心模組
 import '@babylonjs/inspector'; // Babylon.js 場景偵測器
 import { PhysicsMotionType } from '@babylonjs/core/Physics/v2';
 import { registerBuiltInLoaders } from "@babylonjs/loaders/dynamic";
 import { HLight } from '../components/lights/hemisphericLight'; // 半球光元件
 import { DLight } from '../components/lights/directionalLight'; // 定向光元件
+import { Ceiling } from '../components/scene/ceiling'; // 天花板元件
 import { Floor } from '../components/scene/floor'; // 地板元件
 import { Wall } from '../components/scene/wall'; // 牆壁元件
 import { Table } from '../components/scene/table'; // 賭桌元件
@@ -16,6 +17,10 @@ import { DevCamera } from '../components/cameras/devCamera'; // 開發用上帝�
 import { InputManager } from '../managers/inputManager'; // 輸入管理器
 import { PhysicsManager } from '../managers/physicsManager';
 
+const ROOM_LENGTH_W = 100;
+const ROOM_LENGTH_H = 100;
+const ROOM_HEIGHT = 50;
+
 /**
  * 遊戲場景管理類別
  * @description 管理 Babylon.js 場景初始化、物件建立與渲染迴圈
@@ -27,6 +32,7 @@ export class GameView {
     public playerCamera: PlayerCamera; // 玩家相機
     public devCamera: DevCamera; // 開發用相機
     public inputManager: InputManager; // 輸入管理器
+    public ceiling: Ceiling; // 天花板物件
     public walls: Wall[] = []; // 牆壁物件列表
     public floor: Floor; // 地板物件
     public table: Table; // 賭桌物件
@@ -62,8 +68,11 @@ export class GameView {
     /**
      * 顯示 Babylon.js Inspector（開發用，可即時檢查場景物件）
      */
-    private _showInspector() {
-        this.scene.debugLayer.show();
+    private async _showInspector() {
+        const showingInspector = await this.scene.debugLayer.show({
+            overlay: true, // 讓列表過長時滾動不會滾到整個網頁
+        });
+
     }
 
     /**
@@ -73,7 +82,14 @@ export class GameView {
         let diceStopped = false;
         this.engine.runRenderLoop(() => {
             // 相機在玩家上方
-            this.selfPlayer.mesh.position = this.playerCamera.camera.position.add(new Vector3(0, -2.5, 0));
+            const playerCameraPos = this.playerCamera.position;
+            const selfPlayerPos = this.selfPlayer.Mesh.position;
+            
+            // 玩家物件固定角度
+            this.selfPlayer.Mesh.rotationQuaternion = Quaternion.FromEulerAngles(0, Math.PI, 0);
+            const direction: Quaternion = this.selfPlayer.Mesh.rotationQuaternion as Quaternion;
+            this.selfPlayer.Mesh.physicsBody?.setTargetTransform(playerCameraPos.add(new Vector3(0, -2.5, 0)), direction);
+            // this.selfPlayer.Mesh.position = this.playerCamera.camera.position.add(new Vector3(0, -2.5, 0));
 
             // // 偵測骰子靜止
             // if (this.dice && this.dice.Mesh && this.dice.Mesh.physicsBody) {
@@ -96,15 +112,15 @@ export class GameView {
         });
     }
 
+    //#region init
     public async init(canvas: HTMLCanvasElement) {
         await this.physicsManager.enablePhysics(); // 啟用物理系統
 
         this._initInputManager();
         this._initLight(); // 初始化光源
-        this._initFloor(); // 建立地板
+        this._initRoom(); // 建立房間
         this._initTableAndChair(); // 加入賭桌、椅子
         this._initDice(); // 加入骰子物件
-        this._initWalls(); // 建立四面牆壁
 
         this._initPlayerCamera(canvas, new Vector3(0, 5, 15)); // 初始化玩家相機
         this._initSelfPlayer(); // 加入玩家物件
@@ -137,7 +153,10 @@ export class GameView {
      */
     private _initSelfPlayer() {
         this.selfPlayer = new SelfPlayer(this.scene);
-        this.selfPlayer.mesh.position = new Vector3(0, 2.5, 0); // 玩家物件放置於場景中央
+        const height = this.selfPlayer.Height;
+        this.selfPlayer.Mesh.position = new Vector3(0, height / 2 + 0.5, 0); // 玩家物件放置於場景中央
+        this.physicsManager.addPhysics(this.selfPlayer.Mesh, PhysicsMotionType.DYNAMIC, false, 1);
+        this.selfPlayer.Mesh.physicsBody?.setAngularDamping(5000);
     }
 
     /**
@@ -155,7 +174,6 @@ export class GameView {
             mesh.scaling = dealerScale;
 
             dealer.playGlad();
-            // console.log('荷官物件已初始化', dealer.AnimationGroups);
         };
 
         this.dealer = new Dealer(this.scene, 1, afterInit);
@@ -170,7 +188,7 @@ export class GameView {
             const dicePosition = new Vector3(Math.random() * 3, 8, Math.random() * 3);
             dice.Mesh.position = dicePosition;
 
-            // (this.dice.Mesh.material as StandardMaterial).emissiveColor = new Color3(1, 1, 1);
+            // (dice.Mesh.material as StandardMaterial).emissiveColor = new Color3(1, 1, 1);
 
             // 加入物理效果
             this.physicsManager.addPhysics(dice.Mesh, PhysicsMotionType.DYNAMIC, false, 1);
@@ -245,14 +263,6 @@ export class GameView {
     }
 
     /**
-     * 建立地板元件
-     */
-    private _initFloor() {
-        this.floor = new Floor(this.scene, 100); // 建立地板，預設寬度 100
-        this.physicsManager.addPhysics(this.floor.mesh, PhysicsMotionType.STATIC, true);
-    }
-
-    /**
      * 建立賭桌元件
      * 場景中央加入賭桌物件
      */
@@ -272,22 +282,51 @@ export class GameView {
     }
 
     /**
+     * 建立房間六面
+     */
+    private _initRoom() {
+        const lengthW = ROOM_LENGTH_W;
+        const lengthH = ROOM_LENGTH_H;
+        const height = ROOM_HEIGHT;
+        this._initFloor(lengthW, lengthH);
+        this._initWalls(lengthW, lengthH, height);
+        this._initCeiling(lengthW, lengthH, height);
+    }
+
+    /**
+     * 建立地板元件
+     */
+    private _initFloor(lengthW: number, lengthH: number) {
+        this.floor = new Floor(this.scene, lengthW, lengthH); // 建立地板，長度為 lengthW，寬度為 lengthH
+        this.physicsManager.addPhysics(this.floor.Mesh, PhysicsMotionType.STATIC, true);
+    }
+
+    /**
      * 建立四面牆壁元件
      */
-    private _initWalls() {
-        const length = 100;
-        const height = 20;
+    private _initWalls(lengthW: number, lengthH: number, height: number) {
         this.walls.push(
-            new Wall(this.scene, new Vector3(0, height / 2, -length/2), length, height, 'w'), // 前牆
-            new Wall(this.scene, new Vector3(0, height / 2, length/2), length, height, 's'), // 後牆
-            new Wall(this.scene, new Vector3(-length/2, height / 2, 0), length, height, 'a'), // 左牆
-            new Wall(this.scene, new Vector3(length/2, height / 2, 0), length, height, 'd') // 右牆
+            new Wall(this.scene, new Vector3(0, height / 2, -lengthH/2), lengthW, height, 'w'), // 前牆
+            new Wall(this.scene, new Vector3(0, height / 2, lengthH/2), lengthW, height, 's'), // 後牆
+            new Wall(this.scene, new Vector3(-lengthW/2, height / 2, 0), lengthH, height, 'a'), // 左牆
+            new Wall(this.scene, new Vector3(lengthW/2, height / 2, 0), lengthH, height, 'd') // 右牆
         );
         for(const wall of this.walls) {
             this.physicsManager.addPhysics(wall.mesh, PhysicsMotionType.STATIC, true);
         }
     }
 
+    /**
+     * 建立天花板元件
+     */
+    private _initCeiling(lengthW: number, lengthH: number, height: number) {
+        this.ceiling = new Ceiling(this.scene, lengthW, lengthH); // 建立天花板，寬度與長度分別為 lengthW 與 lengthH
+        this.ceiling.Mesh.position.y = height; // 天花板位置在高度上方
+        this.physicsManager.addPhysics(this.ceiling.Mesh, PhysicsMotionType.STATIC, true);
+    }
+    //#endregion
+
+    //#region test function
     private async doFrameGraph() {
         // 在這裡執行每一幀的圖形處理
 
@@ -331,4 +370,5 @@ export class GameView {
         this.dice1.Mesh.material = nodeMaterial;
         this.dice2.Mesh.material = nodeMaterial;
     }
+    //#endregion
 }

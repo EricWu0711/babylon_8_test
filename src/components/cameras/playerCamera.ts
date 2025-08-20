@@ -114,4 +114,8 @@ export class PlayerCamera implements IControllable {
         this.camera.rotation.y += dx * CAMERA_ROTATION_SPEED;
         this.camera.rotation.x += dy * CAMERA_ROTATION_SPEED;
     }
+
+    public get position(): Vector3 {
+        return this.camera.position;
+    }
 }

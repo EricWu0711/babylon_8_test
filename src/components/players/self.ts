@@ -8,7 +8,8 @@ const MOVE_SPEED = 0.2; // 移動速度
  */
 export class SelfPlayer implements IControllable {
     public name: string = 'selfPlayer';
-    public mesh: Mesh;
+    private mesh: Mesh;
+    private height: number;
 
     /**
      * 建立玩家物件
@@ -17,6 +18,7 @@ export class SelfPlayer implements IControllable {
      * @param radius 橢圓寬度
      */
     constructor(scene: Scene, height: number = 5, radius: number = 0.5) {
+        this.height = height;
         // 直立橢圓形（橢圓柱）
         this.mesh = MeshBuilder.CreateSphere(
             this.name,
@@ -31,8 +33,25 @@ export class SelfPlayer implements IControllable {
         this.mesh.position.y = height / 2;
         const mat = new StandardMaterial('selfPlayerMat', scene);
         mat.diffuseColor = new Color3(0.2, 0.6, 0.9); // 藍色
-        mat.backFaceCulling = false;
+        mat.backFaceCulling = true;
         this.mesh.material = mat;
     }
+
+    //#region getter
+    /**
+     * 取得 Mesh
+     */
+    public get Mesh() {
+        return this.mesh;
+    }
+
+    /**
+     * 取得高度
+     */
+    public get Height() {
+        return this.height;
+    }
+
+    //#endregion
 
 }
