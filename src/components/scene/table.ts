@@ -5,9 +5,11 @@ import { MeshBuilder, Mesh, Scene, Vector3, Color3, StandardMaterial } from '@ba
  * 桌面為半圓柱體，底下有三個桌腳
  */
 export class Table {
-    public mesh: Mesh; // 桌面主體
-    public legs: Mesh[] = []; // 桌腳陣列
+    private mesh: Mesh; // 桌面主體
+    private legs: Mesh[] = []; // 桌腳陣列
     private legHeight: number;
+    private thickness: number;
+    private radius: number;
 
     /**
      * 建立賭桌
@@ -36,6 +38,8 @@ export class Table {
             scene
         );
         this.legHeight = legHeight;
+        this.thickness = thickness;
+        this.radius = radius;
         this.mesh.position.y = this.legHeight + thickness / 2;
         const topMat = new StandardMaterial('tableTopMat', scene);
         topMat.diffuseColor = new Color3(0.6, 0.4, 0.2); // 木頭色
@@ -94,5 +98,9 @@ export class Table {
 
     public get LegHeight() {
         return this.legHeight;
+    }
+
+    public get TableTopPos() {
+        return new Vector3(0, this.legHeight + this.thickness, 0);
     }
 }

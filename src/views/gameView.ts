@@ -21,6 +21,8 @@ const ROOM_LENGTH_W = 100;
 const ROOM_LENGTH_H = 100;
 const ROOM_HEIGHT = 50;
 
+const DICE_SCALE = 0.1;
+
 /**
  * 遊戲場景管理類別
  * @description 管理 Babylon.js 場景初始化、物件建立與渲染迴圈
@@ -185,13 +187,15 @@ export class GameView {
     private _initDice() {
         
         const afterInit = (dice: Dice) => {
-            const dicePosition = new Vector3(Math.random() * 3, 8, Math.random() * 3);
+            const tableTopPos = this.table.TableTopPos;
+            const dicePosition = new Vector3(Math.random() * 0.5, tableTopPos.y + 0.25, Math.random() * 0.5);
             dice.Mesh.position = dicePosition;
 
             // (dice.Mesh.material as StandardMaterial).emissiveColor = new Color3(1, 1, 1);
 
             // 加入物理效果
-            this.physicsManager.addPhysics(dice.Mesh, PhysicsMotionType.DYNAMIC, false, 1);
+            this.physicsManager.removePhysics(dice.Mesh);
+            this.physicsManager.addPhysics(dice.Mesh, PhysicsMotionType.DYNAMIC, false, 1, true);
 
             // // 隨機滾動：給予隨機線性與角速度
             const randomLinear = new Vector3(
@@ -234,8 +238,8 @@ export class GameView {
         }
 
         // this.dice = new Dice(this.scene, 1, 0.25, afterInit);
-        this.dice1 = new Dice(this.scene, 1, 1, afterInit);
-        this.dice2 = new Dice(this.scene, 2, 1, afterInit);
+        this.dice1 = new Dice(this.scene, 1, DICE_SCALE, afterInit);
+        this.dice2 = new Dice(this.scene, 2, DICE_SCALE, afterInit);
     }
 
     /**
@@ -269,10 +273,10 @@ export class GameView {
     private _initTableAndChair() {
         this.table = new Table(this.scene);
         // 高度y在元件裡已經跟元件高適配
-        this.table.mesh.position.x = 0;
-        this.table.mesh.position.z = 0;
+        this.table.Mesh.position.x = 0;
+        this.table.Mesh.position.z = 0;
 
-        this.physicsManager.addPhysics(this.table.mesh, PhysicsMotionType.STATIC, true);
+        this.physicsManager.addPhysics(this.table.Mesh, PhysicsMotionType.STATIC, true);
 
         this.chair = new Chair(this.scene);
         // 高度y在元件裡已經跟元件高適配
