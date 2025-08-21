@@ -39,8 +39,10 @@ export class Dice {
         const cloneModel = this.modelManager.prepareModel(this.scene, this.modelName, 'dice', this.uid.toString());
         if (cloneModel && cloneModel.cloneMesh0) {
             this.afterLoaded(cloneModel);
+            this.mesh.parent = null;
             this.mesh.rotation = new Vector3(0, 0, 0);
             this.mesh.scaling = new Vector3(this.scaleSize, this.scaleSize, this.scaleSize);
+            this.mesh.computeWorldMatrix(true);
         }
         callback(this);
     }

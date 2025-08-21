@@ -28,8 +28,8 @@ export class Dealer {
 
     private modelManager: ModelManager;
     private modelName: string = 'dealer';
-    // private modelPath: string = './res/models/angelwomon.glb';
-    private modelPath: string = './res/models/andromon.glb';
+    private modelPath: string = './res/models/angelwomon.glb';  
+    // private modelPath: string = './res/models/andromon.glb';
 
     private mesh: Mesh;
     private animationGroups: { [key: string]: AnimationGroup } = {};
