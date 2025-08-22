@@ -166,7 +166,7 @@ export class GameView {
      */
     private _initDealer() {
         const dealerPosition = new Vector3(0, 0, -1);
-        const scale = 4;
+        const scale = 10; //4;
         const dealerScale = new Vector3(scale, scale, scale);
 
         const afterInit = (dealer: Dealer) => {

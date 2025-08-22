@@ -16,8 +16,9 @@ class ModelsManager {
      * 使用 AssetsManager 載入 glb 模型
      * @param modelName 模型名稱
      * @param modelPath 模型路徑
+     * @param isMultiMesh 是否為多 Mesh 模型，例如整套多米諾牌
      */
-    public preloadModel(modelName: string, modelPath: string): Promise<void> {
+    public preloadModel(modelName: string, modelPath: string, isMultiMesh: boolean = false): Promise<void> {
         const key = modelName + '_' + modelPath;
         if (this.saveModels[key]) {
             console.log('Model already preloaded:', modelName, modelPath, this.saveModels);
@@ -37,11 +38,12 @@ class ModelsManager {
                 // console.log('Model preloaded:', modelName, task);
                 if (task.loadedMeshes.length > 0) {
                     for (let i = 0; i < task.loadedMeshes.length; i++) {
-                        // console.log('task.loadedMeshes:', modelName, task.loadedMeshes[i]);
+                        console.log('task.loadedMeshes:', modelName, task.loadedMeshes[i], isMultiMesh);
                         const mesh = task.loadedMeshes[i];
                         if(mesh.subMeshes && mesh.subMeshes.length > 0 && mesh.material) {
                             mesh.parent = null;
-                            mesh.name = modelName + '_rootMesh';
+                            mesh.name = isMultiMesh ? modelName + '_rootMesh' + i : modelName + '_rootMesh';
+                            isMultiMesh && Tags.AddTagsTo(mesh, modelName + '_rootMesh');
                             mesh.setEnabled(false);
                         } else {
                             Tags.AddTagsTo(mesh, 'dispose');
@@ -154,6 +156,80 @@ class ModelsManager {
         }
 
         return { cloneMesh0: cloneRoot, cloneSkeleton: cloneSkeleton, cloneAnimationGroups: cloneAnimationGroups };
+    }
+
+
+    public prepareMultiModels(scene: Scene, modelName: string, type: string, uid: string) {
+        const roots = scene.getMeshesByTags(modelName + '_rootMesh');
+        console.log('roots:', roots);
+
+        if (!roots || roots.length === 0) {
+            console.error(`Meshes ${modelName}_rootMesh not found in scene.`);
+            return null;
+        }
+
+        const cloneRoots = roots.map((rootMesh) => {
+            return rootMesh.instantiateHierarchy(null, { doNotInstantiate: true }, (source, clone) => {
+                clone.name = source.name;
+                clone.setEnabled(false);
+            });
+        });
+        if (!cloneRoots) {
+            console.error('Failed to clone mesh hierarchy.');
+            return null;
+        }
+
+        if (!this.models[modelName] || !this.models[modelName].skeletons || this.models[modelName].skeletons.length === 0) {
+            return { cloneMeshes: cloneRoots };
+        }
+
+        
+        // 深拷貝骨架
+        const masterSkel = this.models[modelName].skeletons[0] as Skeleton;
+        const cloneSkeleton = masterSkel.clone(type + '_skeleton_' + uid);
+
+        // 深拷貝動畫
+        const cloneAnimationGroups: AnimationGroup[] = [];
+
+        for (const cloneRoot of cloneRoots) {
+            if(!cloneRoot) continue;
+            // map 所有後代並指定 skeleton
+            const map: Record<string, any> = {};
+            const descendants = cloneRoot.getDescendants(false);
+            for (let i = 0; i < descendants.length; i++) {
+                if (descendants[i] instanceof Mesh) {
+                    if ((descendants[i] as Mesh).subMeshes && (descendants[i] as Mesh).skeleton) {
+                        (descendants[i] as Mesh).skeleton = cloneSkeleton;
+                    }
+                }
+                map[descendants[i].name] = descendants[i];
+                if (map[descendants[i].name]) {
+                    map[descendants[i].name].name = map[descendants[i].name].name + '_' + uid;
+                }
+            }
+
+            // 拷貝的骨架要重新連結到新map的後代
+            for (const bone of cloneSkeleton.bones) {
+                const tf = bone.getTransformNode();
+                if (tf && map[tf.name]) {
+                    bone.linkTransformNode(map[tf.name]);
+                }
+            }
+
+            if (this.models[modelName].animationGroups) {
+                const masterAnimations = [...this.models[modelName].animationGroups];
+                masterAnimations.forEach((ag: AnimationGroup) => {
+                    const clone = ag.clone(ag.name, (oldTarget) => {
+                        const newTarget = map[oldTarget.name];
+                        return newTarget || oldTarget;
+                    });
+                    clone.name = type + '_' + uid + '_' + clone.name;
+                    cloneAnimationGroups.push(clone);
+                });
+            }
+        }
+
+        return { cloneMeshes: cloneRoots, cloneSkeleton: cloneSkeleton, cloneAnimationGroups: cloneAnimationGroups };
     }
 
 

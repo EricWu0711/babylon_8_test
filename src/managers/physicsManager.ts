@@ -42,6 +42,8 @@ export class PhysicsManager {
 
         mesh.physicsBody = new PhysicsBody(mesh, motionType, startsAsleep, this.scene);
         if(isCountBoundingBox) {
+            // todo: 後續擴充不同形狀的寫法 switch
+		
             // 用世界空間 extents 建立 PhysicsShapeBox
             const bounds = mesh.getBoundingInfo();
             const centerLocal = bounds.boundingBox.center;
