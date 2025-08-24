@@ -1,7 +1,7 @@
 import { Engine, Scene, Vector3, PassPostProcess, NodeRenderGraph, NodeMaterial, Quaternion, Texture, Color3 } from '@babylonjs/core'; // Babylon.js 核心模組
 import '@babylonjs/inspector'; // Babylon.js 場景偵測器
 import { PhysicsMotionType } from '@babylonjs/core/Physics/v2';
-import { registerBuiltInLoaders } from "@babylonjs/loaders/dynamic";
+import { registerBuiltInLoaders } from '@babylonjs/loaders/dynamic';
 import { HLight } from '../components/lights/hemisphericLight'; // 半球光元件
 import { DLight } from '../components/lights/directionalLight'; // 定向光元件
 import { Ceiling } from '../components/scene/ceiling'; // 天花板元件
@@ -74,7 +74,6 @@ export class GameView {
         const showingInspector = await this.scene.debugLayer.show({
             overlay: true, // 讓列表過長時滾動不會滾到整個網頁
         });
-
     }
 
     /**
@@ -86,7 +85,7 @@ export class GameView {
             // 相機在玩家上方
             const playerCameraPos = this.playerCamera.position;
             const selfPlayerPos = this.selfPlayer.Mesh.position;
-            
+
             // 玩家物件固定角度
             this.selfPlayer.Mesh.rotationQuaternion = Quaternion.FromEulerAngles(0, Math.PI, 0);
             const direction: Quaternion = this.selfPlayer.Mesh.rotationQuaternion as Quaternion;
@@ -166,7 +165,7 @@ export class GameView {
      */
     private _initDealer() {
         const dealerPosition = new Vector3(0, 0, -1);
-        const scale = 10; //4;
+        const scale = 1; //4;
         const dealerScale = new Vector3(scale, scale, scale);
 
         const afterInit = (dealer: Dealer) => {
@@ -185,7 +184,6 @@ export class GameView {
      * 建立骰子物件並放置於桌面中央
      */
     private _initDice() {
-        
         const afterInit = (dice: Dice) => {
             const tableTopPos = this.table.TableTopPos;
             const dicePosition = new Vector3(Math.random() * 0.5, tableTopPos.y + 0.25, Math.random() * 0.5);
@@ -198,16 +196,8 @@ export class GameView {
             this.physicsManager.addPhysics(dice.Mesh, PhysicsMotionType.DYNAMIC, false, 1, true);
 
             // // 隨機滾動：給予隨機線性與角速度
-            const randomLinear = new Vector3(
-                (Math.random() - 0.5) * 10,
-                Math.random() * 5 + 5,
-                (Math.random() - 0.5) * 10
-            );
-            const randomAngular = new Vector3(
-                (Math.random() - 0.5) * 10,
-                (Math.random() - 0.5) * 10,
-                (Math.random() - 0.5) * 10
-            );
+            const randomLinear = new Vector3((Math.random() - 0.5) * 10, Math.random() * 5 + 5, (Math.random() - 0.5) * 10);
+            const randomAngular = new Vector3((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10);
 
             if (dice.Mesh.physicsBody) {
                 dice.Mesh.physicsBody.setLinearVelocity(randomLinear);
@@ -220,22 +210,18 @@ export class GameView {
                     // 隨機方向 impulse
                     const impulse = new Vector3(
                         (Math.random() - 0.5) * 10, // X方向
-                        Math.random() * 1.5 + 4,  // Y方向（向上）
-                        (Math.random() - 0.5) * 10  // Z方向
+                        Math.random() * 1.5 + 4, // Y方向（向上）
+                        (Math.random() - 0.5) * 10 // Z方向
                     );
                     const pos = dice.Mesh.position;
                     dice.Mesh.physicsBody.applyImpulse(impulse, pos);
 
                     // 額外給予隨機角速度，讓骰子飛起時有更多滾動
-                    const angular = new Vector3(
-                        (Math.random() - 0.5) * 20,
-                        (Math.random() - 0.5) * 20,
-                        (Math.random() - 0.5) * 20
-                    );
+                    const angular = new Vector3((Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20);
                     dice.Mesh.physicsBody.setAngularVelocity(angular);
                 }
-            }, 'diceJump'+ dice.Uid);
-        }
+            }, 'diceJump' + dice.Uid);
+        };
 
         // this.dice = new Dice(this.scene, 1, 0.25, afterInit);
         this.dice1 = new Dice(this.scene, 1, DICE_SCALE, afterInit);
@@ -310,12 +296,12 @@ export class GameView {
      */
     private _initWalls(lengthW: number, lengthH: number, height: number) {
         this.walls.push(
-            new Wall(this.scene, new Vector3(0, height / 2, -lengthH/2), lengthW, height, 'w'), // 前牆
-            new Wall(this.scene, new Vector3(0, height / 2, lengthH/2), lengthW, height, 's'), // 後牆
-            new Wall(this.scene, new Vector3(-lengthW/2, height / 2, 0), lengthH, height, 'a'), // 左牆
-            new Wall(this.scene, new Vector3(lengthW/2, height / 2, 0), lengthH, height, 'd') // 右牆
+            new Wall(this.scene, new Vector3(0, height / 2, -lengthH / 2), lengthW, height, 'w'), // 前牆
+            new Wall(this.scene, new Vector3(0, height / 2, lengthH / 2), lengthW, height, 's'), // 後牆
+            new Wall(this.scene, new Vector3(-lengthW / 2, height / 2, 0), lengthH, height, 'a'), // 左牆
+            new Wall(this.scene, new Vector3(lengthW / 2, height / 2, 0), lengthH, height, 'd') // 右牆
         );
-        for(const wall of this.walls) {
+        for (const wall of this.walls) {
             this.physicsManager.addPhysics(wall.mesh, PhysicsMotionType.STATIC, true);
         }
     }
@@ -364,11 +350,7 @@ export class GameView {
     private async doNodeMaterial() {
         // 在這裡執行 NodeMaterial 的相關處理
         // 頭暈shader
-        let nodeMaterial = await NodeMaterial.ParseFromFileAsync(
-            'hypnosis',
-            'https://piratejc.github.io/assets/hypnosis.json',
-            this.scene
-        );
+        let nodeMaterial = await NodeMaterial.ParseFromFileAsync('hypnosis', 'https://piratejc.github.io/assets/hypnosis.json', this.scene);
         // this.table.Mesh.material = nodeMaterial;
         // this.floor.Mesh.material = nodeMaterial;
         this.dice1.Mesh.material = nodeMaterial;

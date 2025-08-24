@@ -28,7 +28,7 @@ class ModelsManager {
             console.log('Model is currently being preloaded:', modelName, modelPath, this.preloadPromises);
             return this.preloadPromises[key];
         }
-        
+
         this.preloadPromises[key] = new Promise((resolve, reject) => {
             const assetsManager = new AssetsManager(this.scene);
             const meshTask = assetsManager.addMeshTask(modelName, '', '', modelPath);
@@ -40,7 +40,7 @@ class ModelsManager {
                     for (let i = 0; i < task.loadedMeshes.length; i++) {
                         console.log('task.loadedMeshes:', modelName, task.loadedMeshes[i], isMultiMesh);
                         const mesh = task.loadedMeshes[i];
-                        if(mesh.subMeshes && mesh.subMeshes.length > 0 && mesh.material) {
+                        if (mesh.subMeshes && mesh.subMeshes.length > 0 && mesh.material) {
                             mesh.parent = null;
                             mesh.name = isMultiMesh ? modelName + '_rootMesh' + i : modelName + '_rootMesh';
                             isMultiMesh && Tags.AddTagsTo(mesh, modelName + '_rootMesh');
@@ -53,7 +53,7 @@ class ModelsManager {
 
                     const disposeMeshes = this.scene.getMeshesByTags('dispose');
                     // console.log('Dispose meshes:', disposeMeshes);
-                    for(const mesh of disposeMeshes) {
+                    for (const mesh of disposeMeshes) {
                         mesh.dispose();
                     }
                 }
@@ -66,7 +66,7 @@ class ModelsManager {
                 this.models[modelName] = {
                     meshes: task.loadedMeshes,
                     skeletons: task.loadedSkeletons,
-                    animationGroups: task.loadedAnimationGroups
+                    animationGroups: task.loadedAnimationGroups,
                 };
                 this.saveModels[key] = this.models[modelName];
 
@@ -85,7 +85,6 @@ class ModelsManager {
         });
         return this.preloadPromises[key];
     }
-
 
     /**
      * 深拷貝模型，避免動畫共用問題
@@ -158,7 +157,6 @@ class ModelsManager {
         return { cloneMesh0: cloneRoot, cloneSkeleton: cloneSkeleton, cloneAnimationGroups: cloneAnimationGroups };
     }
 
-
     public prepareMultiModels(scene: Scene, modelName: string, type: string, uid: string) {
         const roots = scene.getMeshesByTags(modelName + '_rootMesh');
         console.log('roots:', roots);
@@ -170,7 +168,7 @@ class ModelsManager {
 
         const cloneRoots = roots.map((rootMesh) => {
             return rootMesh.instantiateHierarchy(null, { doNotInstantiate: true }, (source, clone) => {
-                clone.name = source.name;
+                clone.name = modelName + '_cloneMesh_' + uid;
                 clone.setEnabled(false);
             });
         });
@@ -183,7 +181,6 @@ class ModelsManager {
             return { cloneMeshes: cloneRoots };
         }
 
-        
         // 深拷貝骨架
         const masterSkel = this.models[modelName].skeletons[0] as Skeleton;
         const cloneSkeleton = masterSkel.clone(type + '_skeleton_' + uid);
@@ -192,7 +189,7 @@ class ModelsManager {
         const cloneAnimationGroups: AnimationGroup[] = [];
 
         for (const cloneRoot of cloneRoots) {
-            if(!cloneRoot) continue;
+            if (!cloneRoot) continue;
             // map 所有後代並指定 skeleton
             const map: Record<string, any> = {};
             const descendants = cloneRoot.getDescendants(false);
@@ -231,7 +228,6 @@ class ModelsManager {
 
         return { cloneMeshes: cloneRoots, cloneSkeleton: cloneSkeleton, cloneAnimationGroups: cloneAnimationGroups };
     }
-
 
     /**
      * 取得已載入的模型

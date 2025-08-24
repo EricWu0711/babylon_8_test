@@ -28,11 +28,12 @@ export class Dealer {
 
     private modelManager: ModelManager;
     private modelName: string = 'dealer';
-    // private modelPath: string = './res/models/angelwomon.glb';  
+    // private modelPath: string = './res/models/angelwomon.glb';
     // private modelPath: string = './res/models/andromon.glb';
-    private modelPath: string = './res/models/dominoe.glb';
-    // private modelPath: string = './res/models/dominoe_2.glb';
-    // private modelPath: string = './res/models/dominoe_3.glb';
+    private modelPath: string = './res/models/dominoes.glb';
+    // private modelPath: string = './res/models/dominoes_2.glb';
+    // private modelPath: string = './res/models/mahjong.glb';
+    // private modelPath: string = './res/models/riichi_mahjong.glb';
 
     private mesh: Mesh;
     private animationGroups: { [key: string]: AnimationGroup } = {};
@@ -55,7 +56,7 @@ export class Dealer {
         // }
         if (cloneModel && cloneModel.cloneMeshes && cloneModel.cloneMeshes.length > 0) {
             this.afterLoaded(cloneModel);
-            this.mesh.rotation = new Vector3(0, Math.PI, 0);
+            this.mesh.rotation = new Vector3(Math.PI, 0, 0);
         }
         callback(this);
     }
@@ -75,8 +76,7 @@ export class Dealer {
         if (!animationGroups) return;
         animationGroups.forEach((ag: AnimationGroup) => {
             Object.keys(TRANSFORM_AG_NAME).forEach((key) => {
-                if (ag.name.includes(key))
-                    this.animationGroups[TRANSFORM_AG_NAME[key as keyof typeof TRANSFORM_AG_NAME]] = ag;
+                if (ag.name.includes(key)) this.animationGroups[TRANSFORM_AG_NAME[key as keyof typeof TRANSFORM_AG_NAME]] = ag;
             });
         });
     }
@@ -84,14 +84,7 @@ export class Dealer {
 
     //#region animation
     public playAnimation(animationName: string, isLoop: boolean, speedRatio: number = 1.0): void {
-        if (this.animationGroups[animationName])
-            this.animationGroups[animationName].start(
-                isLoop,
-                speedRatio,
-                this.animationGroups[animationName].from,
-                this.animationGroups[animationName].to,
-                false
-            );
+        if (this.animationGroups[animationName]) this.animationGroups[animationName].start(isLoop, speedRatio, this.animationGroups[animationName].from, this.animationGroups[animationName].to, false);
         else console.error('playAnimation', animationName, 'is not exist');
     }
 
