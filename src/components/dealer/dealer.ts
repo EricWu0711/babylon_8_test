@@ -29,11 +29,11 @@ export class Dealer {
     private modelManager: ModelManager;
     private modelName: string = 'dealer';
     // private modelPath: string = './res/models/angelwomon.glb';
+    private modelPath: string = './res/models/canterella/canterella.glb';
     // private modelPath: string = './res/models/andromon.glb';
-    private modelPath: string = './res/models/dominoes.glb';
+    // private modelPath: string = './res/models/domino.glb';
+    // private modelPath: string = './res/models/dominoes.glb';
     // private modelPath: string = './res/models/dominoes_2.glb';
-    // private modelPath: string = './res/models/mahjong.glb';
-    // private modelPath: string = './res/models/riichi_mahjong.glb';
 
     private mesh: Mesh;
     private animationGroups: { [key: string]: AnimationGroup } = {};
@@ -47,23 +47,23 @@ export class Dealer {
 
     //#region load model
     private async loadModel(callback: Function) {
-        await this.modelManager.preloadModel(this.modelName, this.modelPath, true);
-        // const cloneModel = this.modelManager.prepareModel(this.scene, this.modelName, 'dealer', this.uid.toString());
-        const cloneModel = this.modelManager.prepareMultiModels(this.scene, this.modelName, 'dealer', this.uid.toString());
-        // if (cloneModel && cloneModel.cloneMesh0) {
-        //     this.afterLoaded(cloneModel);
-        //     this.mesh.rotation = new Vector3(0, 0, 0);
-        // }
-        if (cloneModel && cloneModel.cloneMeshes && cloneModel.cloneMeshes.length > 0) {
+        await this.modelManager.preloadModel(this.modelName, this.modelPath);
+        const cloneModel = this.modelManager.prepareModel(this.scene, this.modelName, 'dealer', this.uid.toString());
+        // const cloneModel = this.modelManager.prepareMultiModels(this.scene, this.modelName, 'dealer', this.uid.toString());
+        if (cloneModel && cloneModel.cloneMesh0) {
             this.afterLoaded(cloneModel);
-            this.mesh.rotation = new Vector3(Math.PI, 0, 0);
+            this.mesh.rotation = new Vector3(0, 0, 0);
         }
+        // if (cloneModel && cloneModel.cloneMeshes && cloneModel.cloneMeshes.length > 0) {
+        //     this.afterLoaded(cloneModel);
+        //     this.mesh.rotation = new Vector3(Math.PI, 0, 0);
+        // }
         callback(this);
     }
 
     private afterLoaded(cloneModel: any) {
-        // cloneModel.cloneMesh0 && this.setMesh(cloneModel.cloneMesh0);
-        cloneModel.cloneMeshes && this.setMesh(cloneModel.cloneMeshes[0]);
+        cloneModel.cloneMesh0 && this.setMesh(cloneModel.cloneMesh0);
+        // cloneModel.cloneMeshes && this.setMesh(cloneModel.cloneMeshes[0]);
         this.mesh.setEnabled(true);
         cloneModel.cloneAnimationGroups && this.setAnimationGroups(cloneModel.cloneAnimationGroups);
     }

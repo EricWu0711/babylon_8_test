@@ -33,7 +33,7 @@ class ModelsManager {
             const assetsManager = new AssetsManager(this.scene);
             const meshTask = assetsManager.addMeshTask(modelName, '', '', modelPath);
 
-            // console.log('in promise:', modelName, modelPath, meshTask);
+            console.log('in promise:', modelName, modelPath, meshTask);
             meshTask.onSuccess = (task: MeshAssetTask) => {
                 // console.log('Model preloaded:', modelName, task);
                 if (task.loadedMeshes.length > 0) {
@@ -42,7 +42,7 @@ class ModelsManager {
                         const mesh = task.loadedMeshes[i];
                         if (mesh.subMeshes && mesh.subMeshes.length > 0 && mesh.material) {
                             mesh.parent = null;
-                            mesh.name = isMultiMesh ? modelName + '_rootMesh' + i : modelName + '_rootMesh';
+                            mesh.name = isMultiMesh ? modelName + '_rootMesh_' + i : modelName + '_rootMesh';
                             isMultiMesh && Tags.AddTagsTo(mesh, modelName + '_rootMesh');
                             mesh.setEnabled(false);
                         } else {

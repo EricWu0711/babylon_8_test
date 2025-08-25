@@ -10,6 +10,7 @@ import { Wall } from '../components/scene/wall'; // 牆壁元件
 import { Table } from '../components/scene/table'; // 賭桌元件
 import { Chair } from '../components/scene/chair'; // 椅子元件
 import { Dice } from '../components/dices/dice'; // 骰子元件
+import { Mahjong } from '../components/cards/mahjong';
 import { SelfPlayer } from '../components/players/self';
 import { Dealer } from '../components/dealer/dealer'; // 荷官元件
 import { PlayerCamera } from '../components/cameras/playerCamera'; // 玩家相機元件
@@ -42,6 +43,7 @@ export class GameView {
     public selfPlayer: SelfPlayer; // 玩家物件（SelfPlayer）
     public dice1: Dice; // 骰子物件
     public dice2: Dice; // 骰子物件
+    public mahjong: Mahjong; // 麻將物件
     public dealer: Dealer; // 荷官物件
 
     /**
@@ -122,6 +124,7 @@ export class GameView {
         this._initRoom(); // 建立房間
         this._initTableAndChair(); // 加入賭桌、椅子
         this._initDice(); // 加入骰子物件
+        this._initMahjong(); // 加入麻將物件
 
         this._initPlayerCamera(canvas, new Vector3(0, 5, 15)); // 初始化玩家相機
         this._initSelfPlayer(); // 加入玩家物件
@@ -165,7 +168,7 @@ export class GameView {
      */
     private _initDealer() {
         const dealerPosition = new Vector3(0, 0, -1);
-        const scale = 1; //4;
+        const scale = 4;
         const dealerScale = new Vector3(scale, scale, scale);
 
         const afterInit = (dealer: Dealer) => {
@@ -226,6 +229,18 @@ export class GameView {
         // this.dice = new Dice(this.scene, 1, 0.25, afterInit);
         this.dice1 = new Dice(this.scene, 1, DICE_SCALE, afterInit);
         this.dice2 = new Dice(this.scene, 2, DICE_SCALE, afterInit);
+    }
+
+    /**
+     * 初始化麻將物件
+     */
+    private _initMahjong() {
+        this.mahjong = new Mahjong(this.scene, 1, (mahjong: Mahjong) => {
+            // const tableTopPos = this.table.TableTopPos;
+            // mahjong.Mesh.position = new Vector3(0, tableTopPos.y + 0.1, 3.25);
+            // const scale = 10;
+            // mahjong.Mesh.scaling = new Vector3(scale, scale, scale);
+        });
     }
 
     /**
