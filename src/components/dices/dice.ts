@@ -35,8 +35,8 @@ export class Dice {
 
     //#region load model
     private async loadModel(callback: Function) {
-        await this.modelManager.preloadModel(this.modelName, this.modelPath);
-        const cloneModel = this.modelManager.prepareModel(this.scene, this.modelName, 'dice', this.uid.toString());
+        await this.modelManager.preloadModel(this.modelName, this.modelPath, { isNeedRename: true });
+        const cloneModel = this.modelManager.prepareModel(this.scene, this.modelName, 'dice', { uid: this.uid.toString() });
         if (cloneModel && cloneModel.cloneMesh0) {
             this.afterLoaded(cloneModel);
             this.mesh.parent = null;

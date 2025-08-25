@@ -1,5 +1,19 @@
 import { Scene, Mesh, Vector3, AnimationGroup, Skeleton, AssetsManager, MeshAssetTask, Tags } from '@babylonjs/core';
 
+interface PreloadOptions {
+    isMultiMesh?: boolean;
+    isNeedRename?: boolean;
+}
+
+interface PrepareOptions {
+    isNeedRename?: boolean;
+    uid?: number | string;
+}
+
+/**
+ * 模型管理類別
+ * @description 使用 AssetsManager 載入 glb 模型，並可深拷貝模型避免動畫共用問題
+ */
 class ModelsManager {
     private static instance: ModelsManager;
     private scene: Scene;
@@ -18,8 +32,11 @@ class ModelsManager {
      * @param modelPath 模型路徑
      * @param isMultiMesh 是否為多 Mesh 模型，例如整套多米諾牌
      */
-    public preloadModel(modelName: string, modelPath: string, isMultiMesh: boolean = false): Promise<void> {
+    public preloadModel(modelName: string, modelPath: string, config?: PreloadOptions): Promise<void> {
         const key = modelName + '_' + modelPath;
+        const isMultiMesh = config?.isMultiMesh || false;
+        const isNeedRename = config?.isNeedRename || false;
+
         if (this.saveModels[key]) {
             console.log('Model already preloaded:', modelName, modelPath, this.saveModels);
             return Promise.resolve();
@@ -33,16 +50,16 @@ class ModelsManager {
             const assetsManager = new AssetsManager(this.scene);
             const meshTask = assetsManager.addMeshTask(modelName, '', '', modelPath);
 
-            console.log('in promise:', modelName, modelPath, meshTask);
+            // console.log('in promise:', modelName, modelPath, meshTask);
             meshTask.onSuccess = (task: MeshAssetTask) => {
                 // console.log('Model preloaded:', modelName, task);
                 if (task.loadedMeshes.length > 0) {
                     for (let i = 0; i < task.loadedMeshes.length; i++) {
-                        console.log('task.loadedMeshes:', modelName, task.loadedMeshes[i], isMultiMesh);
+                        console.log('task.loadedMeshes:', modelName, task.loadedMeshes[i], isMultiMesh, isNeedRename);
                         const mesh = task.loadedMeshes[i];
                         if (mesh.subMeshes && mesh.subMeshes.length > 0 && mesh.material) {
                             mesh.parent = null;
-                            mesh.name = isMultiMesh ? modelName + '_rootMesh_' + i : modelName + '_rootMesh';
+                            mesh.name = isNeedRename ? (isMultiMesh ? modelName + '_rootMesh_' + i : modelName + '_rootMesh') : mesh.name;
                             isMultiMesh && Tags.AddTagsTo(mesh, modelName + '_rootMesh');
                             mesh.setEnabled(false);
                         } else {
@@ -93,8 +110,9 @@ class ModelsManager {
      * @param type 類型
      * @param uid 唯一識別
      */
-    public prepareModel(scene: Scene, modelName: string, type: string, uid: string) {
+    public prepareModel(scene: Scene, modelName: string, type: string, config?: PrepareOptions) {
         const root = scene.getMeshByName(modelName + '_rootMesh');
+        const uid = config?.uid || '0';
         if (!root) {
             console.error(`Mesh ${modelName}_rootMesh not found in scene.`);
             return null;
@@ -157,8 +175,10 @@ class ModelsManager {
         return { cloneMesh0: cloneRoot, cloneSkeleton: cloneSkeleton, cloneAnimationGroups: cloneAnimationGroups };
     }
 
-    public prepareMultiModels(scene: Scene, modelName: string, type: string, uid: string) {
+    public prepareMultiModels(scene: Scene, modelName: string, type: string, config?: PrepareOptions) {
         const roots = scene.getMeshesByTags(modelName + '_rootMesh');
+        const isNeedRename = config?.isNeedRename || false;
+        const uid = config?.uid || '0';
         console.log('roots:', roots);
 
         if (!roots || roots.length === 0) {
@@ -168,7 +188,7 @@ class ModelsManager {
 
         const cloneRoots = roots.map((rootMesh) => {
             return rootMesh.instantiateHierarchy(null, { doNotInstantiate: true }, (source, clone) => {
-                clone.name = modelName + '_cloneMesh_' + uid;
+                clone.name = isNeedRename ? modelName + '_cloneMesh_' + uid : clone.name.replace('_rootMesh', '_cloneMesh');
                 clone.setEnabled(false);
             });
         });

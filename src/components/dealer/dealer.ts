@@ -28,8 +28,8 @@ export class Dealer {
 
     private modelManager: ModelManager;
     private modelName: string = 'dealer';
-    // private modelPath: string = './res/models/angelwomon.glb';
-    private modelPath: string = './res/models/canterella/canterella.glb';
+    private modelPath: string = './res/models/angelwomon.glb';
+    // private modelPath: string = './res/models/canterella/canterella.glb';
     // private modelPath: string = './res/models/andromon.glb';
     // private modelPath: string = './res/models/domino.glb';
     // private modelPath: string = './res/models/dominoes.glb';
@@ -47,8 +47,8 @@ export class Dealer {
 
     //#region load model
     private async loadModel(callback: Function) {
-        await this.modelManager.preloadModel(this.modelName, this.modelPath);
-        const cloneModel = this.modelManager.prepareModel(this.scene, this.modelName, 'dealer', this.uid.toString());
+        await this.modelManager.preloadModel(this.modelName, this.modelPath, { isNeedRename: true });
+        const cloneModel = this.modelManager.prepareModel(this.scene, this.modelName, 'dealer', { uid: this.uid.toString() });
         // const cloneModel = this.modelManager.prepareMultiModels(this.scene, this.modelName, 'dealer', this.uid.toString());
         if (cloneModel && cloneModel.cloneMesh0) {
             this.afterLoaded(cloneModel);
