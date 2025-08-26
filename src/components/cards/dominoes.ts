@@ -12,8 +12,7 @@ export class Dominoes {
 
     private modelManager: ModelManager;
     private modelName: string = 'dominoes';
-    // private modelPath: string = './res/models/dominoes2.glb';
-    private modelPath: string = './res/models/dominoes3.glb';
+    private modelPath: string = './res/models/dominoes.glb';
 
     private meshes: { [key: string]: Mesh | null } = {};
 
@@ -32,7 +31,6 @@ export class Dominoes {
         if (cloneModel && cloneModel.cloneMeshes && cloneModel.cloneMeshes.length > 0) {
             this.afterLoaded(cloneModel);
 
-
             const rows = 4;
             const cols = 7;
             const gapX = 0.5;
@@ -40,7 +38,6 @@ export class Dominoes {
             const startX = -1.5;
             const startZ = 1.5;
             Object.keys(this.meshes).forEach((key, i) => {
-            console.log('Model loaded successfully', key);
                 const mesh = this.meshes[key];
                 if (mesh) {
                     const row = Math.floor(i / cols);
@@ -57,26 +54,25 @@ export class Dominoes {
         // 將相同上下點的 Mesh 分組
         for (let i = 0; i < cloneModel.cloneMeshes.length; i++) {
             const mesh = cloneModel.cloneMeshes[i];
-            const name: string = mesh.name; // ex. domino_root_6_6_primitive0
-            const upPoints = name.split('_')[2];
-            const downPoints = name.split('_')[3];
+            const name: string = mesh.name; // ex. zzz_root_domino_root_4_5_primitive0
+            const upPoints = name.split('_')[4];
+            const downPoints = name.split('_')[5];
 
-            if(tmpArr[upPoints + '_' + downPoints] === undefined) tmpArr[upPoints + '_' + downPoints] = [];
+            if (tmpArr[upPoints + '_' + downPoints] === undefined) tmpArr[upPoints + '_' + downPoints] = [];
             tmpArr[upPoints + '_' + downPoints].push(mesh);
 
             const scale = 0.1;
             mesh.scaling = new Vector3(scale, scale, scale);
-            mesh.setEnabled(true);
         }
 
         // 合併 Mesh
-        Object.keys(tmpArr).forEach(key => {
+        Object.keys(tmpArr).forEach((key) => {
             const bindMesh = Mesh.MergeMeshes(tmpArr[key], true, true, undefined, true, true);
             bindMesh && (bindMesh.name = 'domino_' + key);
             bindMesh && (bindMesh.id = 'domino_' + key);
+            bindMesh && bindMesh.setEnabled(false);
             this.meshes[key] = bindMesh;
         });
-
     }
     //#endregion
 
@@ -92,5 +88,25 @@ export class Dominoes {
     public get Meshes() {
         return this.meshes;
     }
+
+    /**
+     * 取得指定點數的多米諾骨牌 Mesh
+     */
+    public getMeshByPoints(upPoints: number, downPoints: number): Mesh | null {
+        const key = `${upPoints}_${downPoints}`;
+        if (!this.meshes[key]) {
+            console.warn('Dominoes getMeshByPoints not exist:', key);
+            return null;
+        } else return this.meshes[key];
+    }
+
+    /**
+     * 取得一個牌的 Mesh 厚度
+     */
+    public getMeshThickness(): number {
+        const mesh = this.getMeshByPoints(0, 0);
+        return mesh ? mesh.getBoundingInfo().boundingBox.extendSize.y : 0;
+    }
+
     //#endregion
 }

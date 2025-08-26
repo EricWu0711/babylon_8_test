@@ -55,11 +55,18 @@ class ModelsManager {
                 // console.log('Model preloaded:', modelName, task);
                 if (task.loadedMeshes.length > 0) {
                     for (let i = 0; i < task.loadedMeshes.length; i++) {
-                        console.log('task.loadedMeshes:', modelName, task.loadedMeshes[i], isMultiMesh, isNeedRename);
+                        // console.log('task.loadedMeshes:', modelName, task.loadedMeshes[i], isMultiMesh, isNeedRename);
                         const mesh = task.loadedMeshes[i];
                         if (mesh.subMeshes && mesh.subMeshes.length > 0 && mesh.material) {
                             mesh.parent = null;
+
+                            // 後續prepare用id來篩選
+                            mesh.id = isNeedRename ? (isMultiMesh ? modelName + '_rootMesh_' + i : modelName + '_rootMesh') : mesh.id;
+
+                            // 名字前面加上 zzz_root_ 讓他在 inspector 中集中排在最後
                             mesh.name = isNeedRename ? (isMultiMesh ? modelName + '_rootMesh_' + i : modelName + '_rootMesh') : mesh.name;
+                            mesh.name = 'zzz_root_' + mesh.name;
+
                             isMultiMesh && Tags.AddTagsTo(mesh, modelName + '_rootMesh');
                             mesh.setEnabled(false);
                         } else {
@@ -111,7 +118,7 @@ class ModelsManager {
      * @param uid 唯一識別
      */
     public prepareModel(scene: Scene, modelName: string, type: string, config?: PrepareOptions) {
-        const root = scene.getMeshByName(modelName + '_rootMesh');
+        const root = scene.getMeshById(modelName + '_rootMesh');
         const uid = config?.uid || '0';
         if (!root) {
             console.error(`Mesh ${modelName}_rootMesh not found in scene.`);
@@ -268,6 +275,21 @@ class ModelsManager {
     public static getInstance(scene: Scene): ModelsManager {
         if (!ModelsManager.instance) ModelsManager.instance = new ModelsManager(scene);
         return ModelsManager.instance;
+    }
+
+    /**
+     * 移除指定root mesh
+     */
+    public removeModelByRootName(rootName: string) {
+        const roots = this.scene.getMeshesByTags(rootName + '_rootMesh');
+        if (roots && roots.length > 0) {
+            roots.forEach((mesh) => {
+                mesh.dispose();
+            });
+            console.log(`Model with root name ${rootName} has been removed from the scene.`);
+        } else {
+            console.warn(`No meshes found with root name ${rootName}.`);
+        }
     }
 }
 

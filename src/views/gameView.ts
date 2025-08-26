@@ -126,7 +126,7 @@ export class GameView {
         this._initRoom(); // 建立房間
         this._initTableAndChair(); // 加入賭桌、椅子
         this._initDice(); // 加入骰子物件
-        // this._initMahjong(); // 加入麻將物件
+        this._initMahjong(); // 加入麻將物件
         this._initDominoes(); // 加入多米諾骨牌物件
 
         this._initPlayerCamera(canvas, new Vector3(0, 5, 15)); // 初始化玩家相機
@@ -239,10 +239,16 @@ export class GameView {
      */
     private _initMahjong() {
         this.mahjong = new Mahjong(this.scene, 1, (mahjong: Mahjong) => {
-            // const tableTopPos = this.table.TableTopPos;
-            // mahjong.Mesh.position = new Vector3(0, tableTopPos.y + 0.1, 3.25);
-            // const scale = 10;
-            // mahjong.Mesh.scaling = new Vector3(scale, scale, scale);
+            const tableTopPos = this.table.TableTopPos;
+            const mahjongMesh_white_0 = mahjong.getMeshByPoints('white', 0);
+            if (mahjongMesh_white_0) {
+                const scale = 10;
+                mahjongMesh_white_0.scaling = new Vector3(scale, scale, scale);
+                const thickness = mahjong.getMeshThickness('white', 0) * mahjongMesh_white_0.scaling.y;
+                mahjongMesh_white_0.setEnabled(true);
+                mahjongMesh_white_0.position = new Vector3(-2, tableTopPos.y + thickness, 3.25);
+                console.log(mahjongMesh_white_0, thickness);
+            }
         });
     }
 
@@ -251,10 +257,11 @@ export class GameView {
      */
     private _initDominoes() {
         this.dominoes = new Dominoes(this.scene, 1, (dominoes: Dominoes) => {
-            // const tableTopPos = this.table.TableTopPos;
-            // dominoes.Mesh.position = new Vector3(0, tableTopPos.y + 0.1, 3.25);
-            // const scale = 10;
-            // dominoes.Mesh.scaling = new Vector3(scale, scale, scale);
+            const tableTopPos = this.table.TableTopPos;
+            const dominoMesh_0_0 = dominoes.getMeshByPoints(3, 4);
+            const thickness = dominoes.getMeshThickness();
+            dominoMesh_0_0 && dominoMesh_0_0.setEnabled(true);
+            dominoMesh_0_0 && (dominoMesh_0_0.position = new Vector3(2, tableTopPos.y + thickness / 2, 3.25));
         });
     }
 
