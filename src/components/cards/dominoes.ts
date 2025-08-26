@@ -12,9 +12,10 @@ export class Dominoes {
 
     private modelManager: ModelManager;
     private modelName: string = 'dominoes';
-    private modelPath: string = './res/models/dominoes2.glb';
+    // private modelPath: string = './res/models/dominoes2.glb';
+    private modelPath: string = './res/models/dominoes3.glb';
 
-    private mesh: Mesh;
+    private meshes: { [key: string]: Mesh | null } = {};
 
     constructor(scene: Scene, uid: number, callback: Function) {
         this.scene = scene;
@@ -30,23 +31,52 @@ export class Dominoes {
 
         if (cloneModel && cloneModel.cloneMeshes && cloneModel.cloneMeshes.length > 0) {
             this.afterLoaded(cloneModel);
+
+
+            const rows = 4;
+            const cols = 7;
+            const gapX = 0.5;
+            const gapZ = 0.5;
+            const startX = -1.5;
+            const startZ = 1.5;
+            Object.keys(this.meshes).forEach((key, i) => {
+            console.log('Model loaded successfully', key);
+                const mesh = this.meshes[key];
+                if (mesh) {
+                    const row = Math.floor(i / cols);
+                    const col = i % cols;
+                    mesh.position = new Vector3(startX + col * gapX, 4, startZ + row * gapZ);
+                }
+            });
         }
         callback(this);
     }
 
     private afterLoaded(cloneModel: any) {
+        let tmpArr: { [key: string]: Mesh[] } = {};
+        // 將相同上下點的 Mesh 分組
         for (let i = 0; i < cloneModel.cloneMeshes.length; i++) {
             const mesh = cloneModel.cloneMeshes[i];
-            const scale = 1;
-            mesh.scaling = new Vector3(scale, scale, scale);
-            mesh.position = new Vector3(Math.floor(i / 2) * 0.5, 4, Math.floor(i / 2) * 0.5);
+            const name: string = mesh.name; // ex. domino_root_6_6_primitive0
+            const upPoints = name.split('_')[2];
+            const downPoints = name.split('_')[3];
 
+            if(tmpArr[upPoints + '_' + downPoints] === undefined) tmpArr[upPoints + '_' + downPoints] = [];
+            tmpArr[upPoints + '_' + downPoints].push(mesh);
+
+            const scale = 0.1;
+            mesh.scaling = new Vector3(scale, scale, scale);
             mesh.setEnabled(true);
         }
-    }
 
-    private setMesh(cloneMesh0: Mesh) {
-        this.mesh = cloneMesh0;
+        // 合併 Mesh
+        Object.keys(tmpArr).forEach(key => {
+            const bindMesh = Mesh.MergeMeshes(tmpArr[key], true, true, undefined, true, true);
+            bindMesh && (bindMesh.name = 'domino_' + key);
+            bindMesh && (bindMesh.id = 'domino_' + key);
+            this.meshes[key] = bindMesh;
+        });
+
     }
     //#endregion
 
@@ -57,10 +87,10 @@ export class Dominoes {
 
     //#region getter
     /**
-     * 取得多米諾骨牌 Mesh
+     * 取得多米諾骨牌 Meshes
      */
-    public get Mesh() {
-        return this.mesh;
+    public get Meshes() {
+        return this.meshes;
     }
     //#endregion
 }
