@@ -1,4 +1,4 @@
-import { MeshBuilder, Mesh, Scene, Vector3, Color3, StandardMaterial } from '@babylonjs/core';
+import { MeshBuilder, Mesh, Scene, Vector3, Color3, PBRMaterial } from '@babylonjs/core';
 
 /**
  * 賭桌物件
@@ -41,14 +41,18 @@ export class Table {
         this.thickness = thickness;
         this.radius = radius;
         this.mesh.position.y = this.legHeight + thickness / 2;
-        const topMat = new StandardMaterial('tableTopMat', scene);
-        topMat.diffuseColor = new Color3(0.6, 0.4, 0.2); // 木頭色
+        const topMat = new PBRMaterial('tableTopMat', scene);
+        topMat.albedoColor = new Color3(0.6, 0.4, 0.2); // 木頭色
+        topMat.metallic = 0;      // 非金屬
+        topMat.roughness = 0.6;     // 全霧面，不反射
         topMat.backFaceCulling = false; // 雙面渲染，避免看透
         this.mesh.material = topMat;
 
         // 半圓柱切面遮板
-        const cutMat = new StandardMaterial('tableCutMat', scene);
-        cutMat.diffuseColor = new Color3(0.5, 0.3, 0.15); // 近似桌面色
+        const cutMat = new PBRMaterial('tableCutMat', scene);
+        cutMat.albedoColor = new Color3(0.5, 0.3, 0.15); // 近似桌面色
+        cutMat.metallic = 0;      // 非金屬
+        cutMat.roughness = 0.6;     // 全霧面，不反射
         cutMat.backFaceCulling = false;
         const cutFace = MeshBuilder.CreateBox(
             'tableCutFace',
@@ -81,8 +85,10 @@ export class Table {
                 scene
             );
             leg.position = legPositions[i];
-            const legMat = new StandardMaterial(`tableLegMat${i + 1}`, scene);
-            legMat.diffuseColor = new Color3(0.3, 0.2, 0.1); // 深木色
+            const legMat = new PBRMaterial(`tableLegMat${i + 1}`, scene);
+            legMat.albedoColor = new Color3(0.3, 0.2, 0.1); // 深木色
+            legMat.metallic = 0;      // 非金屬
+            legMat.roughness = 0.6;     // 全霧面，不反射
             leg.material = legMat;
             this.legs.push(leg);
         }

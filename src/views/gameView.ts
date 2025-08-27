@@ -286,8 +286,8 @@ export class GameView {
      * 初始化場景光源（半球光）
      */
     private _initLight() {
-        new HLight(this.scene); // 建立半球光元件
-        new DLight(this.scene); // 建立定向光元件
+        // new HLight(this.scene); // 建立半球光元件
+        new DLight(this.scene, new Vector3(0, -ROOM_HEIGHT, 0)); // 建立定向光元件
     }
 
     /**

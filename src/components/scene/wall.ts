@@ -1,4 +1,4 @@
-import { MeshBuilder, Scene, StandardMaterial, Color3, Vector3, Mesh } from '@babylonjs/core';
+import { MeshBuilder, Scene, PBRMaterial, Color3, Vector3, Mesh } from '@babylonjs/core';
 
 export class Wall {
     public mesh: Mesh;
@@ -27,8 +27,10 @@ export class Wall {
                 break;
         }
 
-        const mat = new StandardMaterial('wallMat', scene);
-        mat.diffuseColor = new Color3(0.9, 0.9, 0.9);
+        const mat = new PBRMaterial('wallMat', scene);
+        mat.albedoColor = new Color3(0.9, 0.9, 0.9);
+        mat.metallic = 0;      // 非金屬
+        mat.roughness = 0.6;     // 全霧面，不反射
         mat.backFaceCulling = true;
         this.mesh.material = mat;
     }
