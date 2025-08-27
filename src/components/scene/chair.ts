@@ -1,4 +1,4 @@
-import { MeshBuilder, Mesh, Scene, Vector3, Color3, StandardMaterial } from '@babylonjs/core';
+import { MeshBuilder, Mesh, Scene, Vector3, Color3, PBRMaterial } from '@babylonjs/core';
 
 /**
  * 椅子物件
@@ -36,8 +36,10 @@ export class Chair {
         );
         this.legHeight = legHeight;
         this.seat.position.y = legHeight + seatThickness / 2;
-        const seatMat = new StandardMaterial('chairSeatMat', scene);
-        seatMat.diffuseColor = new Color3(0.8, 0.7, 0.5); // 淺色坐墊
+        const seatMat = new PBRMaterial('chairSeatMat', scene);
+        seatMat.albedoColor = new Color3(0.8, 0.7, 0.5); // 淺色坐墊
+        seatMat.metallic = 0;      // 非金屬
+        seatMat.roughness = 0.6;     // 全霧面，不反射
         seatMat.backFaceCulling = false;
         this.seat.material = seatMat;
 
@@ -52,8 +54,10 @@ export class Chair {
             scene
         );
         this.leg.position = new Vector3(0, this.legHeight / 2, 0);
-        const legMat = new StandardMaterial('chairLegMat', scene);
-        legMat.diffuseColor = new Color3(0.5, 0.4, 0.3); // 深色支架
+        const legMat = new PBRMaterial('chairLegMat', scene);
+        legMat.albedoColor = new Color3(0.5, 0.4, 0.3); // 深色支架
+        legMat.metallic = 0;      // 非金屬
+        legMat.roughness = 0.6;     // 全霧面，不反射
         legMat.backFaceCulling = false;
         this.leg.material = legMat;
 

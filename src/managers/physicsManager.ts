@@ -41,7 +41,9 @@ export class PhysicsManager {
         mesh.computeWorldMatrix(true);
 
         mesh.physicsBody = new PhysicsBody(mesh, motionType, startsAsleep, this.scene);
-        if(isCountBoundingBox) {
+        if (isCountBoundingBox) {
+            // todo: 後續擴充不同形狀的寫法 switch
+
             // 用世界空間 extents 建立 PhysicsShapeBox
             const bounds = mesh.getBoundingInfo();
             const centerLocal = bounds.boundingBox.center;
@@ -58,12 +60,12 @@ export class PhysicsManager {
         mesh.physicsBody.setMassProperties({
             mass: mass,
         });
-        console.log('物件已加入物理系統 (v2)', mesh.name, mesh, mesh.physicsBody);
+        console.log('物件已加入物理系統 (v2)', mesh.name); //, mesh, mesh.physicsBody);
     }
 
     /**
      * 將 mesh 剛體移除 (v2)
-     * @param mesh 
+     * @param mesh
      */
     public removePhysics(mesh: Mesh) {
         if (mesh.physicsBody) {

@@ -28,8 +28,12 @@ export class Dealer {
 
     private modelManager: ModelManager;
     private modelName: string = 'dealer';
-    private modelPath: string = './res/models/angelwomon.glb';  
+    private modelPath: string = './res/models/angelwomon.glb';
+    // private modelPath: string = './res/models/canterella/canterella.glb';
     // private modelPath: string = './res/models/andromon.glb';
+    // private modelPath: string = './res/models/domino.glb';
+    // private modelPath: string = './res/models/dominoes.glb';
+    // private modelPath: string = './res/models/dominoes_2.glb';
 
     private mesh: Mesh;
     private animationGroups: { [key: string]: AnimationGroup } = {};
@@ -43,17 +47,24 @@ export class Dealer {
 
     //#region load model
     private async loadModel(callback: Function) {
-        await this.modelManager.preloadModel(this.modelName, this.modelPath);
-        const cloneModel = this.modelManager.prepareModel(this.scene, this.modelName, 'dealer', this.uid.toString());
+        await this.modelManager.preloadModel(this.modelName, this.modelPath, { isNeedRename: true });
+        const cloneModel = this.modelManager.prepareModel(this.scene, this.modelName, 'dealer', { uid: this.uid.toString() });
+        // const cloneModel = this.modelManager.prepareMultiModels(this.scene, this.modelName, 'dealer', this.uid.toString());
         if (cloneModel && cloneModel.cloneMesh0) {
             this.afterLoaded(cloneModel);
             this.mesh.rotation = new Vector3(0, 0, 0);
         }
+        // if (cloneModel && cloneModel.cloneMeshes && cloneModel.cloneMeshes.length > 0) {
+        //     this.afterLoaded(cloneModel);
+        //     this.mesh.rotation = new Vector3(Math.PI, 0, 0);
+        // }
         callback(this);
     }
 
     private afterLoaded(cloneModel: any) {
         cloneModel.cloneMesh0 && this.setMesh(cloneModel.cloneMesh0);
+        // cloneModel.cloneMeshes && this.setMesh(cloneModel.cloneMeshes[0]);
+        this.mesh.setEnabled(true);
         cloneModel.cloneAnimationGroups && this.setAnimationGroups(cloneModel.cloneAnimationGroups);
     }
 
@@ -65,8 +76,7 @@ export class Dealer {
         if (!animationGroups) return;
         animationGroups.forEach((ag: AnimationGroup) => {
             Object.keys(TRANSFORM_AG_NAME).forEach((key) => {
-                if (ag.name.includes(key))
-                    this.animationGroups[TRANSFORM_AG_NAME[key as keyof typeof TRANSFORM_AG_NAME]] = ag;
+                if (ag.name.includes(key)) this.animationGroups[TRANSFORM_AG_NAME[key as keyof typeof TRANSFORM_AG_NAME]] = ag;
             });
         });
     }
@@ -74,14 +84,7 @@ export class Dealer {
 
     //#region animation
     public playAnimation(animationName: string, isLoop: boolean, speedRatio: number = 1.0): void {
-        if (this.animationGroups[animationName])
-            this.animationGroups[animationName].start(
-                isLoop,
-                speedRatio,
-                this.animationGroups[animationName].from,
-                this.animationGroups[animationName].to,
-                false
-            );
+        if (this.animationGroups[animationName]) this.animationGroups[animationName].start(isLoop, speedRatio, this.animationGroups[animationName].from, this.animationGroups[animationName].to, false);
         else console.error('playAnimation', animationName, 'is not exist');
     }
 
