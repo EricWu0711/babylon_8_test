@@ -6,9 +6,10 @@ export class HLight {
     /**
      * 建立半球光，預設高度 20（單位：公尺），強度 0.8
      */
-    constructor(scene: Scene, direction: Vector3 = new Vector3(0, 20, 0), intensity: number = 1) {
+    constructor(scene: Scene, direction: Vector3 = new Vector3(0, 20, 0)) {
         this.light = new HemisphericLight('hemisphericLight', direction, scene);
-        this.light.intensity = intensity;
-        // this.light.diffuse = new Color3(255, 255, 255);
+        this.light.intensity = 0.5;
+        this.light.diffuse = new Color3(1, 1, 1);
+        this.light.groundColor = new Color3(1, 1, 1);
     }
 }

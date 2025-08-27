@@ -4,6 +4,7 @@ import { PhysicsMotionType } from '@babylonjs/core/Physics/v2';
 import { registerBuiltInLoaders } from '@babylonjs/loaders/dynamic';
 import { HLight } from '../components/lights/hemisphericLight'; // 半球光元件
 import { DLight } from '../components/lights/directionalLight'; // 定向光元件
+import { PLight } from '../components/lights/pointLight'; // 點光源元件
 import { Ceiling } from '../components/scene/ceiling'; // 天花板元件
 import { Floor } from '../components/scene/floor'; // 地板元件
 import { Wall } from '../components/scene/wall'; // 牆壁元件
@@ -286,8 +287,9 @@ export class GameView {
      * 初始化場景光源（半球光）
      */
     private _initLight() {
-        // new HLight(this.scene); // 建立半球光元件
+        new HLight(this.scene, new Vector3(0, ROOM_HEIGHT, 0)); // 建立環境光元件
         new DLight(this.scene, new Vector3(0, -ROOM_HEIGHT, 0)); // 建立定向光元件
+        // new PLight(this.scene, new Vector3(0, ROOM_HEIGHT, 0)); // 建立點光源元件
     }
 
     /**
