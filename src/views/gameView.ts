@@ -242,12 +242,12 @@ export class GameView {
             const tableTopPos = this.table.TableTopPos;
             const mahjongMesh_white_0 = mahjong.getMeshByPoints('white', 0);
             if (mahjongMesh_white_0) {
-                const scale = 10;
+                const scale = 0.35;
                 mahjongMesh_white_0.scaling = new Vector3(scale, scale, scale);
                 const thickness = mahjong.getMeshThickness('white', 0) * mahjongMesh_white_0.scaling.y;
                 mahjongMesh_white_0.setEnabled(true);
                 mahjongMesh_white_0.position = new Vector3(-2, tableTopPos.y + thickness, 3.25);
-                console.log(mahjongMesh_white_0, thickness);
+                console.log('mahjong', mahjongMesh_white_0, thickness);
             }
         });
     }
@@ -262,6 +262,7 @@ export class GameView {
             const thickness = dominoes.getMeshThickness();
             dominoMesh_0_0 && dominoMesh_0_0.setEnabled(true);
             dominoMesh_0_0 && (dominoMesh_0_0.position = new Vector3(2, tableTopPos.y + thickness / 2, 3.25));
+            console.log('dominoes', dominoMesh_0_0, thickness);
         });
     }
 
