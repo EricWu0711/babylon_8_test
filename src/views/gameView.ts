@@ -126,14 +126,14 @@ export class GameView {
         this._initLight(); // 初始化光源
         this._initRoom(); // 建立房間
         this._initTableAndChair(); // 加入賭桌、椅子
-        this._initDice(); // 加入骰子物件
+        // this._initDice(); // 加入骰子物件
         this._initMahjong(); // 加入麻將物件
-        this._initDominoes(); // 加入多米諾骨牌物件
+        // this._initDominoes(); // 加入多米諾骨牌物件
 
         this._initPlayerCamera(canvas, new Vector3(0, 5, 15)); // 初始化玩家相機
         this._initSelfPlayer(); // 加入玩家物件
         this._initDevCamera(canvas); // 初始化開發用相機
-        this.inputManager.bindCallbackOnKeyboardC(() => this.switchCamera(), 'switchCamera'); // 綁定切換相機事件
+        this.inputManager.bindCallbackOnKeyboard('C', () => this.switchCamera(), 'switchCamera'); // 綁定切換相機事件
 
         this._initDealer();
 
@@ -212,22 +212,26 @@ export class GameView {
             }
 
             // 綁定 x 鍵讓骰子彈起來（統一用 inputManager）
-            this.inputManager.bindCallbackOnKeyboardX(() => {
-                if (dice && dice.Mesh.physicsBody) {
-                    // 隨機方向 impulse
-                    const impulse = new Vector3(
-                        (Math.random() - 0.5) * 10, // X方向
-                        Math.random() * 1.5 + 4, // Y方向（向上）
-                        (Math.random() - 0.5) * 10 // Z方向
-                    );
-                    const pos = dice.Mesh.position;
-                    dice.Mesh.physicsBody.applyImpulse(impulse, pos);
+            this.inputManager.bindCallbackOnKeyboard(
+                'X',
+                () => {
+                    if (dice && dice.Mesh.physicsBody) {
+                        // 隨機方向 impulse
+                        const impulse = new Vector3(
+                            (Math.random() - 0.5) * 10, // X方向
+                            Math.random() * 1.5 + 4, // Y方向（向上）
+                            (Math.random() - 0.5) * 10 // Z方向
+                        );
+                        const pos = dice.Mesh.position;
+                        dice.Mesh.physicsBody.applyImpulse(impulse, pos);
 
-                    // 額外給予隨機角速度，讓骰子飛起時有更多滾動
-                    const angular = new Vector3((Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20);
-                    dice.Mesh.physicsBody.setAngularVelocity(angular);
-                }
-            }, 'diceJump' + dice.Uid);
+                        // 額外給予隨機角速度，讓骰子飛起時有更多滾動
+                        const angular = new Vector3((Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20);
+                        dice.Mesh.physicsBody.setAngularVelocity(angular);
+                    }
+                },
+                'diceJump' + dice.Uid
+            );
         };
 
         // this.dice = new Dice(this.scene, 1, 0.25, afterInit);
@@ -241,15 +245,17 @@ export class GameView {
     private _initMahjong() {
         this.mahjong = new Mahjong(this.scene, 1, (mahjong: Mahjong) => {
             const tableTopPos = this.table.TableTopPos;
-            const mahjongMesh_white_0 = mahjong.getMeshByPoints('white', 0);
-            if (mahjongMesh_white_0) {
-                const scale = 0.35;
-                mahjongMesh_white_0.scaling = new Vector3(scale, scale, scale);
-                const thickness = mahjong.getMeshThickness('white', 0) * mahjongMesh_white_0.scaling.y;
-                mahjongMesh_white_0.setEnabled(true);
-                mahjongMesh_white_0.position = new Vector3(-2, tableTopPos.y + thickness, 3.25);
-                console.log('mahjong', mahjongMesh_white_0, thickness);
-            }
+            this.mahjong.MinY = tableTopPos.y + this.mahjong.getMeshThickness('dot', 1);
+            this.inputManager.bindCallbackOnKeyboard(
+                'F',
+                () => {
+                    // mahjong.playFlip(mahjongMesh_white_0);
+                    mahjong.playDealAnimation(() => {
+                        console.log('Deal animation finished');
+                    });
+                },
+                'mahjongFlip'
+            );
         });
     }
 

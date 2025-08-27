@@ -1,6 +1,6 @@
 import { IControllable } from '../constants/interfaces';
 
-const interactBtn = [ 'w', 'a', 's', 'd', 'c', 'x'];
+const interactBtn = ['w', 'a', 's', 'd', 'c', 'x', 'f'];
 /**
  * 輸入管理器
  * 集中監聽鍵盤與滑鼠事件，並分派動作給目前註冊的可控制物件
@@ -10,10 +10,9 @@ export class InputManager {
     private controllList: string[] = [];
     private keyboardConfigs: { [key: string]: { [key: string]: () => void } } = {};
     private pressedKeys: { [key: string]: boolean } = {};
-    private eventsOnKeyboardC: { [key: string]: () => void } = {};
-    private eventsNameOnC: string[] = [];
-    private eventsOnKeyboardX: { [key: string]: () => void } = {};
-    private eventsNameOnX: string[] = [];
+
+    private eventsOnKeyboard: { [key: string]: { [eventName: string]: () => void } } = {};
+    private eventsNameOn: { [key: string]: string[] } = {};
 
     private isDragging: boolean = false;
     private lastX: number = 0;
@@ -45,14 +44,19 @@ export class InputManager {
         }
     }
 
-    public bindCallbackOnKeyboardC(callback: () => void, eventName: string) {
-        this.eventsOnKeyboardC[eventName] = callback;
-        this.eventsNameOnC.push(eventName);
-    }
+    public bindCallbackOnKeyboard(key: string, callback: () => void, eventName: string) {
+        // 確保 eventsOnKeyboard[key] 已初始化
+        if (!this.eventsOnKeyboard[key]) {
+            this.eventsOnKeyboard[key] = {};
+        }
 
-    public bindCallbackOnKeyboardX(callback: () => void, eventName: string) {
-        this.eventsOnKeyboardX[eventName] = callback;
-        this.eventsNameOnX.push(eventName);
+        // 確保 eventsNameOn[key] 已初始化
+        if (!this.eventsNameOn[key]) {
+            this.eventsNameOn[key] = [];
+        }
+
+        this.eventsOnKeyboard[key][eventName] = callback;
+        this.eventsNameOn[key].push(eventName);
     }
 
     /**
@@ -62,17 +66,25 @@ export class InputManager {
         // 鍵盤事件
         window.addEventListener('keydown', (e) => {
             switch (e.key.toLowerCase()) {
-                case 'w': case 's': case 'a': case 'd':
+                case 'w':
+                case 's':
+                case 'a':
+                case 'd':
                     this.pressedKeys[e.key.toLowerCase()] = true;
                     break;
                 case 'c':
-                    for (const name of this.eventsNameOnC) {
-                        this.eventsOnKeyboardC[name]();
+                    for (const name of this.eventsNameOn['C']) {
+                        this.eventsOnKeyboard['C'][name]();
                     }
                     break;
                 case 'x':
-                    for (const name of this.eventsNameOnX) {
-                        this.eventsOnKeyboardX[name]();
+                    for (const name of this.eventsNameOn['X']) {
+                        this.eventsOnKeyboard['X'][name]();
+                    }
+                    break;
+                case 'f':
+                    for (const name of this.eventsNameOn['F']) {
+                        this.eventsOnKeyboard['F'][name]();
                     }
                     break;
             }
@@ -80,7 +92,10 @@ export class InputManager {
 
         window.addEventListener('keyup', (e) => {
             switch (e.key.toLowerCase()) {
-                case 'w': case 's': case 'a': case 'd':
+                case 'w':
+                case 's':
+                case 'a':
+                case 'd':
                     this.pressedKeys[e.key.toLowerCase()] = false;
                     break;
             }
