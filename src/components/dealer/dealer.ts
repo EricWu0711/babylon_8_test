@@ -52,7 +52,7 @@ export class Dealer {
         // const cloneModel = this.modelManager.prepareMultiModels(this.scene, this.modelName, 'dealer', this.uid.toString());
         if (cloneModel && cloneModel.cloneMesh0) {
             this.afterLoaded(cloneModel);
-            this.mesh.rotation = new Vector3(0, 0, 0);
+            this.mesh.rotation = new Vector3(0, Math.PI, 0);
         }
         // if (cloneModel && cloneModel.cloneMeshes && cloneModel.cloneMeshes.length > 0) {
         //     this.afterLoaded(cloneModel);

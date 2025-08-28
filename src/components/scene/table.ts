@@ -96,6 +96,7 @@ export class Table {
         this.legs.forEach((leg) => (leg.parent = this.mesh));
 
         this.mesh.rotation.x = Math.PI;
+        this.mesh.rotation.y = Math.PI;
     }
 
     public get Mesh() {

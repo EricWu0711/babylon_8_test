@@ -2,7 +2,7 @@ import { Scene, Mesh, Vector3, Animation, AnimationGroup } from '@babylonjs/core
 import ModelManager from '../../managers/modelsManager';
 
 const DEALCARD_START_POS_X = 0;
-const DEALCARD_START_POS_Z = 3;
+const DEALCARD_START_POS_Z = -3;
 const DEAL_DELAY = 250;
 
 /**
@@ -116,7 +116,7 @@ export class Mahjong {
         const thickness = this.getMeshThickness('dot', 1);
 
         // 初始狀態：強制翻到牌背
-        mj.rotation = new Vector3(0, 0, -Math.PI);
+        mj.rotation = new Vector3(0, 0, Math.PI);
 
         // 動畫參數
         const frameRate = 30;
@@ -129,8 +129,8 @@ export class Mahjong {
 
         // 設置旋轉動畫的關鍵幀
         const rotationKeys = [
-            { frame: 0, value: -Math.PI }, // 背面
-            { frame: totalFrames / 2, value: -Math.PI / 2 }, // 側面
+            { frame: 0, value: Math.PI }, // 背面
+            { frame: totalFrames / 2, value: Math.PI / 2 }, // 側面
             { frame: totalFrames, value: 0 }, // 正面
         ];
         rotationAnimation.setKeys(rotationKeys);

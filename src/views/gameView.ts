@@ -130,7 +130,7 @@ export class GameView {
         this._initMahjong(); // 加入麻將物件
         // this._initDominoes(); // 加入多米諾骨牌物件
 
-        this._initPlayerCamera(canvas, new Vector3(0, 5, 15)); // 初始化玩家相機
+        this._initPlayerCamera(canvas); // 初始化玩家相機
         this._initSelfPlayer(); // 加入玩家物件
         this._initDevCamera(canvas); // 初始化開發用相機
         this.inputManager.bindCallbackOnKeyboard('C', () => this.switchCamera(), 'switchCamera'); // 綁定切換相機事件
@@ -147,7 +147,8 @@ export class GameView {
      * 初始化玩家相機（第一人稱視角）
      * @param canvas HTMLCanvasElement - 用於控制相機的畫布
      */
-    private _initPlayerCamera(canvas: HTMLCanvasElement, startPosition: Vector3 = new Vector3(0, 5, -15)) {
+    private _initPlayerCamera(canvas: HTMLCanvasElement) {
+        const startPosition: Vector3 = new Vector3(0, 5, -15)
         this.playerCamera = new PlayerCamera(this.scene, canvas, startPosition);
         this.playerCamera.setTarget(new Vector3(0, 5, 0)); // 設定相機目標位置
 
@@ -162,7 +163,7 @@ export class GameView {
     private _initSelfPlayer() {
         this.selfPlayer = new SelfPlayer(this.scene);
         const height = this.selfPlayer.Height;
-        this.selfPlayer.Mesh.position = new Vector3(0, height / 2 + 0.5, 0); // 玩家物件放置於場景中央
+        this.selfPlayer.Mesh.position = new Vector3(0, height / 2 + 0.5, -10); // 玩家物件放置於場景中央
         this.physicsManager.addPhysics(this.selfPlayer.Mesh, PhysicsMotionType.DYNAMIC, false, 1);
         this.selfPlayer.Mesh.physicsBody?.setAngularDamping(5000);
     }
@@ -171,7 +172,7 @@ export class GameView {
      * 初始化荷官物件，放置於賭桌旁
      */
     private _initDealer() {
-        const dealerPosition = new Vector3(0, 0, -1);
+        const dealerPosition = new Vector3(0, 0, 1);
         const scale = 4;
         const dealerScale = new Vector3(scale, scale, scale);
 
@@ -313,7 +314,7 @@ export class GameView {
         this.chair = new Chair(this.scene);
         // 高度y在元件裡已經跟元件高適配
         this.chair.seat.position.x = 0;
-        this.chair.seat.position.z = 8;
+        this.chair.seat.position.z = -8;
         this.physicsManager.addPhysics(this.chair.Mesh, PhysicsMotionType.STATIC, true);
     }
 
