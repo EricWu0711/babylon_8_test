@@ -22,6 +22,7 @@ export class Mahjong {
 
     private meshes: { [key: string]: Mesh[] } = {};
 
+    private dealStartPosition: Vector3 = new Vector3(DEALCARD_START_POS_X, 0, DEALCARD_START_POS_Z);
     private playerCount: number = 4;
     private round: number = 0;
     private unDealedMjs: Mesh[] = [];
@@ -90,7 +91,7 @@ export class Mahjong {
                 bindMesh.setEnabled(false);
                 const scale = 0.35;
                 bindMesh.scaling = new Vector3(scale, scale, scale);
-                bindMesh.rotation = new Vector3(0, 0, -Math.PI);
+                bindMesh.rotation = new Vector3(0, Math.PI, -Math.PI);
                 this.meshes[key].push(bindMesh);
                 this.unDealedMjs.push(bindMesh);
 
@@ -116,7 +117,7 @@ export class Mahjong {
         const thickness = this.getMeshThickness('dot', 1);
 
         // 初始狀態：強制翻到牌背
-        mj.rotation = new Vector3(0, 0, Math.PI);
+        // mj.rotation = new Vector3(0, 0, Math.PI);
 
         // 動畫參數
         const frameRate = 30;
@@ -129,8 +130,8 @@ export class Mahjong {
 
         // 設置旋轉動畫的關鍵幀
         const rotationKeys = [
-            { frame: 0, value: Math.PI }, // 背面
-            { frame: totalFrames / 2, value: Math.PI / 2 }, // 側面
+            { frame: 0, value: -Math.PI }, // 背面
+            { frame: totalFrames / 2, value: -Math.PI / 2 }, // 側面
             { frame: totalFrames, value: 0 }, // 正面
         ];
         rotationAnimation.setKeys(rotationKeys);
@@ -164,13 +165,13 @@ export class Mahjong {
         }
         this.round++;
 
-        const startPos = new Vector3(DEALCARD_START_POS_X, this.minY, DEALCARD_START_POS_Z);
+        const startPos = new Vector3(this.dealStartPosition.x, this.minY, this.dealStartPosition.z);
         const thickness = this.getMeshThickness('dot', 1);
         const dealPositions = [
-            new Vector3(DEALCARD_START_POS_X - 2, this.minY, DEALCARD_START_POS_Z), // 玩家1位置
-            new Vector3(DEALCARD_START_POS_X, this.minY, DEALCARD_START_POS_Z + 1.5), // 玩家2位置
-            new Vector3(DEALCARD_START_POS_X + 2, this.minY, DEALCARD_START_POS_Z), // 玩家3位置
-            new Vector3(DEALCARD_START_POS_X, this.minY, DEALCARD_START_POS_Z - 1.5), // 玩家4位置
+            new Vector3(this.dealStartPosition.x - 2, this.minY, this.dealStartPosition.z), // 玩家1位置
+            new Vector3(this.dealStartPosition.x, this.minY, this.dealStartPosition.z + 1.5), // 玩家2位置
+            new Vector3(this.dealStartPosition.x + 2, this.minY, this.dealStartPosition.z), // 玩家3位置
+            new Vector3(this.dealStartPosition.x, this.minY, this.dealStartPosition.z - 1.5), // 玩家4位置
         ];
 
         // 隱藏已發的麻將
@@ -210,7 +211,9 @@ export class Mahjong {
             const offsetY = thickness; // 兩張牌的堆疊高度差
             if (mj1 && mj2) {
                 mj1.position = new Vector3(startPos.x + offsetSeat, startPos.y, startPos.z);
+                mj1.rotation.z = -Math.PI;
                 mj2.position = new Vector3(startPos.x + offsetSeat, startPos.y + offsetY, startPos.z);
+                mj2.rotation.z = -Math.PI;
                 mj1.setEnabled(true);
                 mj2.setEnabled(true);
             }
@@ -297,6 +300,13 @@ export class Mahjong {
      */
     public set MinY(value: number) {
         this.minY = value;
+    }
+
+    /**
+     * 設定發牌起始位置
+     */
+    public setDealStartPosition(position: Vector3) {
+        this.dealStartPosition = position;
     }
 
     /**

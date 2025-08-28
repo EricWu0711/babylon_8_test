@@ -1,4 +1,4 @@
-import { Engine, Scene, Vector3, PassPostProcess, NodeRenderGraph, NodeMaterial, Quaternion, Texture, Color3 } from '@babylonjs/core'; // Babylon.js 核心模組
+import { Engine, Scene, Vector3, PassPostProcess, NodeRenderGraph, NodeMaterial, Quaternion, Mesh, Color3 } from '@babylonjs/core'; // Babylon.js 核心模組
 import '@babylonjs/inspector'; // Babylon.js 場景偵測器
 import { PhysicsMotionType } from '@babylonjs/core/Physics/v2';
 import { registerBuiltInLoaders } from '@babylonjs/loaders/dynamic';
@@ -8,7 +8,8 @@ import { PLight } from '../components/lights/pointLight'; // 點光源元件
 import { Ceiling } from '../components/scene/ceiling'; // 天花板元件
 import { Floor } from '../components/scene/floor'; // 地板元件
 import { Wall } from '../components/scene/wall'; // 牆壁元件
-import { Table } from '../components/scene/table'; // 賭桌元件
+import { HalfCylinderTable } from '../components/scene/halfCTable'; // 半圓賭桌元件
+import { CylinderTable } from '../components/scene/cTable'; // 橢圓賭桌元件
 import { Chair } from '../components/scene/chair'; // 椅子元件
 import { Dice } from '../components/dices/dice'; // 骰子元件
 import { Mahjong } from '../components/cards/mahjong'; // 麻將元件
@@ -17,6 +18,7 @@ import { SelfPlayer } from '../components/players/self';
 import { Dealer } from '../components/dealer/dealer'; // 荷官元件
 import { PlayerCamera } from '../components/cameras/playerCamera'; // 玩家相機元件
 import { DevCamera } from '../components/cameras/devCamera'; // 開發用上帝視角相機元件
+import { Game28gAngelCamera } from '../components/cameras/game_28gAngle_Camera'; // 28度角相機元件
 import { InputManager } from '../managers/inputManager'; // 輸入管理器
 import { PhysicsManager } from '../managers/physicsManager';
 
@@ -31,16 +33,20 @@ const DICE_SCALE = 0.1;
  * @description 管理 Babylon.js 場景初始化、物件建立與渲染迴圈
  */
 export class GameView {
+    private canvas: HTMLCanvasElement;
     public engine: Engine; // Babylon.js 引擎
     public physicsManager: PhysicsManager;
     public scene: Scene; // Babylon.js 場景
     public playerCamera: PlayerCamera; // 玩家相機
     public devCamera: DevCamera; // 開發用相機
+    public game28gAngelCamera: Game28gAngelCamera; // 28度角相機
     public inputManager: InputManager; // 輸入管理器
     public ceiling: Ceiling; // 天花板物件
     public walls: Wall[] = []; // 牆壁物件列表
     public floor: Floor; // 地板物件
-    public table: Table; // 賭桌物件
+    public halfCylinderTable: HalfCylinderTable; // 半圓賭桌物件
+    public cylinderTable: CylinderTable; // 橢圓賭桌物件
+    public currentTable: HalfCylinderTable | CylinderTable; // 當前賭桌物件
     public chair: Chair; // 椅子物件
     public selfPlayer: SelfPlayer; // 玩家物件（SelfPlayer）
     public dice1: Dice; // 骰子物件
@@ -48,6 +54,8 @@ export class GameView {
     public mahjong: Mahjong; // 麻將物件
     public dominoes: Dominoes; // 多米諾骨牌物件
     public dealer: Dealer; // 荷官物件
+    public otherPlayer_1: Dealer;
+    public otherPlayer_2: Dealer;
 
     /**
      * 建構子：初始化引擎與場景，並建立主要場景物件
@@ -56,6 +64,7 @@ export class GameView {
     constructor(canvas: HTMLCanvasElement) {
         this.engine = new Engine(canvas, true); // 建立 Babylon.js 引擎
         this.scene = new Scene(this.engine); // 建立場景
+        this.canvas = canvas;
 
         this.physicsManager = new PhysicsManager(this.scene);
         registerBuiltInLoaders();
@@ -67,8 +76,12 @@ export class GameView {
     public switchCamera() {
         if (this.scene.activeCamera === this.playerCamera.camera) {
             this.scene.activeCamera = this.devCamera.camera;
+            this.devCamera.enableControl(true, this.canvas);
+        } else if (this.scene.activeCamera === this.devCamera.camera) {
+            this.scene.activeCamera = this.game28gAngelCamera.camera;
         } else {
             this.scene.activeCamera = this.playerCamera.camera;
+            this.playerCamera.enableControl(true, this.canvas);
         }
     }
 
@@ -96,6 +109,11 @@ export class GameView {
             const direction: Quaternion = this.selfPlayer.Mesh.rotationQuaternion as Quaternion;
             this.selfPlayer.Mesh.physicsBody?.setTargetTransform(playerCameraPos.add(new Vector3(0, -2.5, 0)), direction);
             // this.selfPlayer.Mesh.position = this.playerCamera.camera.position.add(new Vector3(0, -2.5, 0));
+
+            if (this.game28gAngelCamera) {
+                this.game28gAngelCamera.camera.alpha = -Math.PI / 2;
+                this.game28gAngelCamera.camera.beta = 0;
+            }
 
             // // 偵測骰子靜止
             // if (this.dice && this.dice.Mesh && this.dice.Mesh.physicsBody) {
@@ -133,9 +151,11 @@ export class GameView {
         this._initPlayerCamera(canvas); // 初始化玩家相機
         this._initSelfPlayer(); // 加入玩家物件
         this._initDevCamera(canvas); // 初始化開發用相機
+        this._initGame28gAngelCamera(canvas); // 初始化 28 度角相機
         this.inputManager.bindCallbackOnKeyboard('C', () => this.switchCamera(), 'switchCamera'); // 綁定切換相機事件
 
         this._initDealer();
+        this._initOtherPlayers();
 
         this._showInspector(); // 顯示場景偵測器（開發用）
 
@@ -148,7 +168,7 @@ export class GameView {
      * @param canvas HTMLCanvasElement - 用於控制相機的畫布
      */
     private _initPlayerCamera(canvas: HTMLCanvasElement) {
-        const startPosition: Vector3 = new Vector3(0, 5, -15)
+        const startPosition: Vector3 = new Vector3(0, 6, -15)
         this.playerCamera = new PlayerCamera(this.scene, canvas, startPosition);
         this.playerCamera.setTarget(new Vector3(0, 5, 0)); // 設定相機目標位置
 
@@ -172,7 +192,7 @@ export class GameView {
      * 初始化荷官物件，放置於賭桌旁
      */
     private _initDealer() {
-        const dealerPosition = new Vector3(0, 0, 1);
+        const dealerPosition = new Vector3(0, 0, 4.5);
         const scale = 4;
         const dealerScale = new Vector3(scale, scale, scale);
 
@@ -182,10 +202,35 @@ export class GameView {
             mesh.position = dealerPosition;
             mesh.scaling = dealerScale;
 
-            dealer.playGlad();
+            dealer.playGlad({ isAdditive: true });
         };
 
         this.dealer = new Dealer(this.scene, 1, afterInit);
+    }
+
+    /**
+     * 初始化其他玩家物件
+     */
+    private _initOtherPlayers() {
+
+        this.otherPlayer_1 = new Dealer(this.scene, 2, (player1: Dealer) => {
+            const mesh = player1.Mesh;
+            mesh.setEnabled(true);
+            mesh.position = new Vector3(-5, 0, 0);
+            mesh.rotation = new Vector3(0, Math.PI/2, 0);
+            mesh.scaling = new Vector3(4, 4, 4);
+
+            player1.playGuard({ isAdditive: true });
+        });
+        this.otherPlayer_2 = new Dealer(this.scene, 3, (player2: Dealer) => {
+            const mesh = player2.Mesh;
+            mesh.setEnabled(true);
+            mesh.position = new Vector3(5, 0, 0);
+            mesh.rotation = new Vector3(0, -Math.PI/2, 0);
+            mesh.scaling = new Vector3(4, 4, 4);
+
+            player2.playWin({ isAdditive: true });
+        });
     }
 
     /**
@@ -193,7 +238,7 @@ export class GameView {
      */
     private _initDice() {
         const afterInit = (dice: Dice) => {
-            const tableTopPos = this.table.TableTopPos;
+            const tableTopPos = this.currentTable.TableTopPos;
             const dicePosition = new Vector3(Math.random() * 0.5, tableTopPos.y + 0.25, Math.random() * 0.5);
             dice.Mesh.position = dicePosition;
 
@@ -245,7 +290,9 @@ export class GameView {
      */
     private _initMahjong() {
         this.mahjong = new Mahjong(this.scene, 1, (mahjong: Mahjong) => {
-            const tableTopPos = this.table.TableTopPos;
+            const tableTopPos = this.currentTable.TableTopPos;
+            const tablePos = this.currentTable.Mesh.position;
+            this.mahjong.setDealStartPosition(new Vector3(tablePos.x, tableTopPos.y, tablePos.z));
             this.mahjong.MinY = tableTopPos.y + this.mahjong.getMeshThickness('dot', 1);
             this.inputManager.bindCallbackOnKeyboard(
                 'F',
@@ -265,7 +312,7 @@ export class GameView {
      */
     private _initDominoes() {
         this.dominoes = new Dominoes(this.scene, 1, (dominoes: Dominoes) => {
-            const tableTopPos = this.table.TableTopPos;
+            const tableTopPos = this.currentTable.TableTopPos;
             const dominoMesh_0_0 = dominoes.getMeshByPoints(3, 4);
             const thickness = dominoes.getMeshThickness();
             dominoMesh_0_0 && dominoMesh_0_0.setEnabled(true);
@@ -280,6 +327,16 @@ export class GameView {
      */
     private _initDevCamera(canvas: HTMLCanvasElement) {
         this.devCamera = new DevCamera(this.scene, canvas);
+    }
+
+    /**
+     * 初始化 28 度角相機
+     * @param canvas HTMLCanvasElement - 用於控制相機的畫布
+     */
+    private _initGame28gAngelCamera(canvas: HTMLCanvasElement) {
+        const startPosition: Vector3 = new Vector3(0, 3, 0);
+        this.game28gAngelCamera = new Game28gAngelCamera(this.scene, canvas);
+        this.game28gAngelCamera.camera.position = startPosition;
     }
 
     /**
@@ -304,12 +361,21 @@ export class GameView {
      * 場景中央加入賭桌物件
      */
     private _initTableAndChair() {
-        this.table = new Table(this.scene);
+        this.halfCylinderTable = new HalfCylinderTable(this.scene);
         // 高度y在元件裡已經跟元件高適配
-        this.table.Mesh.position.x = 0;
-        this.table.Mesh.position.z = 0;
+        this.halfCylinderTable.Mesh.position.x = 0;
+        this.halfCylinderTable.Mesh.position.z = 0;
 
-        this.physicsManager.addPhysics(this.table.Mesh, PhysicsMotionType.STATIC, true);
+        this.physicsManager.addPhysics(this.halfCylinderTable.Mesh, PhysicsMotionType.STATIC, true);
+
+        this.cylinderTable = new CylinderTable(this.scene);
+        this.cylinderTable.Mesh.position.x = 0;
+        this.cylinderTable.Mesh.position.z = 0;
+
+        this.physicsManager.addPhysics(this.cylinderTable.Mesh, PhysicsMotionType.STATIC, true);
+
+        this.currentTable = this.cylinderTable; // 預設使用橢圓賭桌
+        this.halfCylinderTable.setEnabled(false);
 
         this.chair = new Chair(this.scene);
         // 高度y在元件裡已經跟元件高適配

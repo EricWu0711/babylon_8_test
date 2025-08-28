@@ -8,6 +8,7 @@ interface PreloadOptions {
 interface PrepareOptions {
     isNeedRename?: boolean;
     uid?: number | string;
+    isNeedCloneAnimation?: boolean;
 }
 
 /**
@@ -167,6 +168,8 @@ class ModelsManager {
 
         // 深拷貝動畫
         const cloneAnimationGroups: AnimationGroup[] = [];
+        const isNeedCloneAnimation = config?.isNeedCloneAnimation || false;
+        console.log('is ', isNeedCloneAnimation)
         if (this.models[modelName].animationGroups) {
             const masterAnimations = [...this.models[modelName].animationGroups];
             masterAnimations.forEach((ag: AnimationGroup) => {
@@ -176,7 +179,7 @@ class ModelsManager {
                 });
                 clone.name = type + '_' + uid + '_' + clone.name;
                 cloneAnimationGroups.push(clone);
-            });
+            }, isNeedCloneAnimation);
         }
 
         return { cloneMesh0: cloneRoot, cloneSkeleton: cloneSkeleton, cloneAnimationGroups: cloneAnimationGroups };
@@ -186,7 +189,7 @@ class ModelsManager {
         const roots = scene.getMeshesByTags(modelName + '_rootMesh');
         const isNeedRename = config?.isNeedRename || false;
         const uid = config?.uid || '0';
-        console.log('roots:', roots);
+        // console.log('roots:', roots);
 
         if (!roots || roots.length === 0) {
             console.error(`Meshes ${modelName}_rootMesh not found in scene.`);

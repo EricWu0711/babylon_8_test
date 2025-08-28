@@ -17,6 +17,12 @@ const TRANSFORM_AG_NAME = {
     special01: 'special01',
 };
 
+interface AnimationConfig {
+    isLoop?: boolean;
+    speedRatio?: number;
+    isAdditive?: boolean;
+}
+
 /**
  * 荷官物件
  * @param scene Babylon.js 場景
@@ -48,7 +54,7 @@ export class Dealer {
     //#region load model
     private async loadModel(callback: Function) {
         await this.modelManager.preloadModel(this.modelName, this.modelPath, { isNeedRename: true });
-        const cloneModel = this.modelManager.prepareModel(this.scene, this.modelName, 'dealer', { uid: this.uid.toString() });
+        const cloneModel = this.modelManager.prepareModel(this.scene, this.modelName, 'dealer', { uid: this.uid.toString(), isNeedCloneAnimation: true });
         // const cloneModel = this.modelManager.prepareMultiModels(this.scene, this.modelName, 'dealer', this.uid.toString());
         if (cloneModel && cloneModel.cloneMesh0) {
             this.afterLoaded(cloneModel);
@@ -66,6 +72,7 @@ export class Dealer {
         // cloneModel.cloneMeshes && this.setMesh(cloneModel.cloneMeshes[0]);
         this.mesh.setEnabled(true);
         cloneModel.cloneAnimationGroups && this.setAnimationGroups(cloneModel.cloneAnimationGroups);
+        this.playIdle({ isLoop: true, isAdditive: true });
     }
 
     private setMesh(cloneMesh0: Mesh) {
@@ -79,25 +86,40 @@ export class Dealer {
                 if (ag.name.includes(key)) this.animationGroups[TRANSFORM_AG_NAME[key as keyof typeof TRANSFORM_AG_NAME]] = ag;
             });
         });
+
+    console.log('afterLoaded: ', this.uid, this.animationGroups);
     }
     //#endregion
 
     //#region animation
-    public playAnimation(animationName: string, isLoop: boolean, speedRatio: number = 1.0): void {
-        if (this.animationGroups[animationName]) this.animationGroups[animationName].start(isLoop, speedRatio, this.animationGroups[animationName].from, this.animationGroups[animationName].to, false);
+    public playAnimation(animationName: string, config?: AnimationConfig): void {
+        const { isLoop = false, speedRatio = 1.0, isAdditive = false } = config || {};
+        if (this.animationGroups[animationName]) this.animationGroups[animationName].start(isLoop, speedRatio, this.animationGroups[animationName].from, this.animationGroups[animationName].to, isAdditive);
         else console.error('playAnimation', animationName, 'is not exist');
     }
 
-    public playGlad() {
-        this.playAnimation('glad', true);
+    public playIdle(config?: AnimationConfig) {
+        this.playAnimation('idle', config);
     }
 
-    public playMove() {
-        this.playAnimation('move', true);
+    public playGlad(config?: AnimationConfig) {
+        this.playAnimation('glad', config);
     }
 
-    public playAttack01() {
-        this.playAnimation('attack01', true);
+    public playGuard(config?: AnimationConfig) {
+        this.playAnimation('guard', config);
+    }
+
+    public playWin(config?: AnimationConfig) {
+        this.playAnimation('win', config);
+    }
+
+    public playMove(config?: AnimationConfig) {
+        this.playAnimation('move', config);
+    }
+
+    public playAttack01(config?: AnimationConfig) {
+        this.playAnimation('attack01', config);
     }
 
     //#endregion
