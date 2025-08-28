@@ -35,6 +35,7 @@ export class SelfPlayer implements IControllable {
         mat.diffuseColor = new Color3(0.2, 0.6, 0.9); // 藍色
         mat.backFaceCulling = true;
         this.mesh.material = mat;
+        this.mesh.visibility = 0;
     }
 
     //#region getter

@@ -4,7 +4,7 @@ import { ArcRotateCamera, Scene, Vector3 } from '@babylonjs/core';
  * 開發用上帝視角相機元件
  * @description 建立 ArcRotateCamera，可自由旋轉、縮放、俯瞰場景
  */
-export class DevCamera {
+export class Game28gAngelCamera {
     public camera: ArcRotateCamera; // Babylon.js ArcRotateCamera 實例
 
     /**
@@ -24,20 +24,10 @@ export class DevCamera {
         radius: number = 120,
         target: Vector3 = Vector3.Zero()
     ) {
-        this.camera = new ArcRotateCamera('devCamera', alpha, beta, radius, target, scene);
-        this.camera.attachControl(canvas, true);
+        this.camera = new ArcRotateCamera('game_28g_Angle_Camera', alpha, beta, radius, target, scene);
         this.camera.lowerRadiusLimit = 10;
         this.camera.upperRadiusLimit = 500;
+        this.camera.lowerAlphaLimit = -10;
         this.camera.wheelPrecision = 2;
-        // 可根據需求調整旋轉、縮放限制
-    }
-
-    /**
-     * 啟用或停用相機控制
-     * @param enable boolean - 是否啟用控制
-     * @param canvas HTMLCanvasElement - 控制用畫布
-     */
-    public enableControl(enable: boolean, canvas: HTMLCanvasElement) {
-        this.camera.attachControl(canvas, enable);
     }
 }
