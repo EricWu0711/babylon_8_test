@@ -89,7 +89,7 @@ export class Mahjong {
                 bindMesh.name = 'mahjong_' + key + '_0';
                 bindMesh.id = 'mahjong_' + key + '_0';
                 bindMesh.setEnabled(false);
-                const scale = 0.35;
+                const scale = 0.45;
                 bindMesh.scaling = new Vector3(scale, scale, scale);
                 bindMesh.rotation = new Vector3(0, Math.PI, -Math.PI);
                 this.meshes[key].push(bindMesh);
@@ -168,10 +168,10 @@ export class Mahjong {
         const startPos = new Vector3(this.dealStartPosition.x, this.minY, this.dealStartPosition.z);
         const thickness = this.getMeshThickness('dot', 1);
         const dealPositions = [
-            new Vector3(this.dealStartPosition.x - 2, this.minY, this.dealStartPosition.z), // 玩家1位置
-            new Vector3(this.dealStartPosition.x, this.minY, this.dealStartPosition.z + 1.5), // 玩家2位置
-            new Vector3(this.dealStartPosition.x + 2, this.minY, this.dealStartPosition.z), // 玩家3位置
-            new Vector3(this.dealStartPosition.x, this.minY, this.dealStartPosition.z - 1.5), // 玩家4位置
+            new Vector3(this.dealStartPosition.x - 2 + 0.1, this.minY, this.dealStartPosition.z), // 玩家1位置
+            new Vector3(this.dealStartPosition.x + 0.1, this.minY, this.dealStartPosition.z + 1.5), // 玩家2位置
+            new Vector3(this.dealStartPosition.x + 2 - 0.1, this.minY, this.dealStartPosition.z), // 玩家3位置
+            new Vector3(this.dealStartPosition.x + 0.1, this.minY, this.dealStartPosition.z - 1.5 + 0.1), // 玩家4位置
         ];
 
         // 隱藏已發的麻將

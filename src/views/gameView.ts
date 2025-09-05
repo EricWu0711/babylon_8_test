@@ -19,8 +19,10 @@ import { Dealer } from '../components/dealer/dealer'; // 荷官元件
 import { PlayerCamera } from '../components/cameras/playerCamera'; // 玩家相機元件
 import { DevCamera } from '../components/cameras/devCamera'; // 開發用上帝視角相機元件
 import { Game28gAngelCamera } from '../components/cameras/game_28gAngle_Camera'; // 28度角相機元件
+
 import { InputManager } from '../managers/inputManager'; // 輸入管理器
 import { PhysicsManager } from '../managers/physicsManager';
+import { GuiManager } from "../managers/guiManager";
 
 const ROOM_LENGTH_W = 100;
 const ROOM_LENGTH_H = 100;
@@ -35,12 +37,10 @@ const DICE_SCALE = 0.1;
 export class GameView {
     private canvas: HTMLCanvasElement;
     public engine: Engine; // Babylon.js 引擎
-    public physicsManager: PhysicsManager;
     public scene: Scene; // Babylon.js 場景
     public playerCamera: PlayerCamera; // 玩家相機
     public devCamera: DevCamera; // 開發用相機
     public game28gAngelCamera: Game28gAngelCamera; // 28度角相機
-    public inputManager: InputManager; // 輸入管理器
     public ceiling: Ceiling; // 天花板物件
     public walls: Wall[] = []; // 牆壁物件列表
     public floor: Floor; // 地板物件
@@ -57,6 +57,10 @@ export class GameView {
     public otherPlayer_1: Dealer;
     public otherPlayer_2: Dealer;
 
+    public physicsManager: PhysicsManager;
+    public inputManager: InputManager; // 輸入管理器
+    private guiManager: GuiManager;
+
     /**
      * 建構子：初始化引擎與場景，並建立主要場景物件
      * @param canvas HTMLCanvasElement - 用於渲染的畫布
@@ -65,6 +69,12 @@ export class GameView {
         this.engine = new Engine(canvas, true); // 建立 Babylon.js 引擎
         this.scene = new Scene(this.engine); // 建立場景
         this.canvas = canvas;
+
+        // 監聽視窗大小變化事件
+        window.addEventListener('resize', () => {
+            this.engine.resize(); // 調整引擎大小
+            // this.guiManager.resizeGui();
+        });
 
         this.physicsManager = new PhysicsManager(this.scene);
         registerBuiltInLoaders();
@@ -77,11 +87,14 @@ export class GameView {
         if (this.scene.activeCamera === this.playerCamera.camera) {
             this.scene.activeCamera = this.devCamera.camera;
             this.devCamera.enableControl(true, this.canvas);
+            // this.guiManager.hideAllGuiSeats();
         } else if (this.scene.activeCamera === this.devCamera.camera) {
             this.scene.activeCamera = this.game28gAngelCamera.camera;
+            this.guiManager.showAllGuiSeats();
         } else {
             this.scene.activeCamera = this.playerCamera.camera;
             this.playerCamera.enableControl(true, this.canvas);
+            // this.guiManager.hideAllGuiSeats();
         }
     }
 
@@ -156,6 +169,10 @@ export class GameView {
 
         this._initDealer();
         this._initOtherPlayers();
+
+        // 初始化 GUI 管理器
+        this.guiManager = new GuiManager(this.scene);
+        this.guiManager.initGuiSeats(this.cylinderTable.TopPlane);
 
         this._showInspector(); // 顯示場景偵測器（開發用）
 

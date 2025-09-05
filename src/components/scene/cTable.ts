@@ -1,5 +1,7 @@
 import { MeshBuilder, Mesh, Scene, Vector3, Color3, PBRMaterial } from '@babylonjs/core';
 
+const SCALE_Z = 0.75; // 縮放 Z 軸，形成橢圓
+
 /**
  * 賭桌物件
  * 桌面為橢圓柱體，底下有三個桌腳
@@ -10,6 +12,7 @@ export class CylinderTable {
     private legHeight: number;
     private thickness: number;
     private radius: number;
+    private tableTopPlane: Mesh; // 桌面上的四邊形平面
 
     /**
      * 建立賭桌
@@ -36,7 +39,7 @@ export class CylinderTable {
             },
             scene
         );
-        this.mesh.scaling = new Vector3(1, 1, 0.75); // 縮放 Z 軸，形成橢圓
+        this.mesh.scaling = new Vector3(1, 1, SCALE_Z); // 縮放 Z 軸，形成橢圓
         this.legHeight = legHeight;
         this.thickness = thickness;
         this.radius = radius;
@@ -78,6 +81,15 @@ export class CylinderTable {
         // 將桌腳設為桌面的子物件
         this.legs.forEach((leg) => (leg.parent = this.mesh));
 
+        // 創建桌面上的橢圓形平面
+        this.tableTopPlane = MeshBuilder.CreateDisc('tableTopPlane', { radius: radius, tessellation: 64 }, scene);
+        this.tableTopPlane.scaling = new Vector3(1, 1, SCALE_Z); // 調整為橢圓形
+        this.tableTopPlane.position = new Vector3(0, -this.thickness / 2, 0); // 放置於桌面上方
+        this.tableTopPlane.rotation = new Vector3(Math.PI / 2, 0, Math.PI ); // 調整平面方向
+        this.tableTopPlane.material = topMat;
+        this.tableTopPlane.material.zOffset = 1;
+        this.tableTopPlane.parent = this.mesh;
+
         this.mesh.rotation.x = Math.PI;
         this.mesh.rotation.y = Math.PI;
     }
@@ -85,10 +97,15 @@ export class CylinderTable {
     public setEnabled(enabled: boolean) {
         this.mesh.setEnabled(enabled);
         this.legs.forEach((leg) => leg.setEnabled(enabled));
+        this.tableTopPlane.setEnabled(enabled);
     }
 
     public get Mesh() {
         return this.mesh;
+    }
+
+    public get TopPlane() {
+        return this.tableTopPlane;
     }
 
     public get LegHeight() {
